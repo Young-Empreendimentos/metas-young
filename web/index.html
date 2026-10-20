@@ -277,6 +277,10 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.9 1.15V22a2 2 0 01-4 0v-.09A1.65 1.65 0 006 20.4l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 003.6 15H3.5a2 2 0 010-4H3.6a1.65 1.65 0 001.5-2.9l-.06-.06A2 2 0 118 5.07l.06.06A1.65 1.65 0 0011 4.6V4.5a2 2 0 014 0v.09a1.65 1.65 0 002.9 1.5l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0020.4 11h.1a2 2 0 010 4z"/></svg>
         Config
       </button>
+      <button class="btn" id="btnHist" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>
+        Histórico
+      </button>
       <button class="btn" id="btnSair">Sair</button>
     </div>
     <div class="chips" id="chipsEquipe"></div>
@@ -404,6 +408,7 @@
     el("vMetas").setAttribute("aria-pressed",view==="metas");
     el("vPessoas").setAttribute("aria-pressed",view==="pessoas");
     el("btnCfg").hidden=!canEdit;
+    el("btnHist").hidden=!canEdit;
     var be=el("btnEdit");
     be.classList.toggle("accent",editMode);
     be.childNodes[be.childNodes.length-1].nodeValue=editMode?" Editando":" Modo edição";
@@ -619,6 +624,28 @@
     h+='</div><div class="m-foot"><button class="btn" data-act="close">Fechar</button><button class="btn accent" data-act="savecfg">Salvar</button></div>';
     openModal(h);
   }
+  function histModal(){
+    currentModal="hist";
+    openModal('<div class="m-head"><h2>Histórico de alterações</h2><button class="x" data-act="close">×</button></div><div class="m-body" id="histBody"><div class="lbl">Carregando…</div></div><div class="m-foot"><button class="btn" data-act="close">Fechar</button></div>');
+    sb.from("audit").select("*").order("ts",{ascending:false}).limit(150).then(function(r){
+      var box=el("histBody");if(!box)return;
+      if(r.error){box.innerHTML='<div class="hint">Não foi possível carregar o histórico: '+esc(r.error.message)+'</div>';return;}
+      if(!r.data||!r.data.length){box.innerHTML='<div class="lbl">Sem alterações registradas ainda.</div>';return;}
+      var h='<div class="plist">';
+      r.data.forEach(function(a){
+        var when="";try{when=new Date(a.ts).toLocaleString("pt-BR");}catch(e){when=a.ts;}
+        var ator=(a.ator||"—").split("@")[0];
+        var de=(a.de==null||a.de==="")?"—":a.de, para=(a.para==null||a.para==="")?"—":a.para;
+        var txt;
+        if(a.acao==="valor")txt='<b>'+esc(a.indicador)+'</b> <span style="color:var(--muted)">('+esc(a.responsavel||"")+')</span> — '+esc((a.campo||"").toUpperCase())+': '+esc(de)+' → '+esc(para);
+        else if(a.acao==="meta_criada")txt='criou a meta <b>'+esc(a.indicador)+'</b>';
+        else if(a.acao==="meta_excluida")txt='excluiu a meta <b>'+esc(a.indicador)+'</b>';
+        else txt='editou <b>'+esc(a.indicador)+'</b> — '+esc(a.campo)+': '+esc(de)+' → '+esc(para);
+        h+='<div class="prow"><div class="pi"><div class="pnn" style="font-weight:600">'+txt+'</div><div class="pee">'+esc(ator)+' · '+esc(when)+'</div></div></div>';
+      });
+      h+='</div>';box.innerHTML=h;
+    });
+  }
   function personForm(k){
     currentModal="person";
     var isNew=!k,p=k?peopleMap[k]:{nome:"",equipe:""};
@@ -652,6 +679,7 @@
     if(ev.target.closest("#vPessoas")){view="pessoas";render();return;}
     if(ev.target.closest("#btnEdit")){if(canEdit){editMode=!editMode;render();}return;}
     if(ev.target.closest("#btnCfg")){if(canEdit)cfgModal();return;}
+    if(ev.target.closest("#btnHist")){if(canEdit)histModal();return;}
     if(ev.target.closest("#btnSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnGoogle")){doLogin();return;}
     if(ev.target===el("ov")){closeModal();return;}
