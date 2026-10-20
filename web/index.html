@@ -11,13 +11,13 @@
 <style>
   /* Layout: placar fixo no topo + barra de filtros sticky + grade de cards de metas / ranking de pessoas */
   :root{
-    --bg:#ffffff; --surface:#ffffff; --surface-2:#f4f4f5; --surface-3:#e8e8ea;
-    --fg:#0c0c0c; --muted:#68686e; --faint:#9a9aa1; --line:#e6e6e9;
-    --accent:#fe5009; --accent-soft:#ffe7db; --accent-ink:#ffffff;
-    --good:#1f9d57; --good-bg:#dff3e6; --good-line:#9bd9b4;
-    --bad:#e01e37; --bad-bg:#fde3e6; --bad-line:#f3aeb6;
-    --wait:#8a8a90; --wait-bg:#efeff1;
-    --gold:#fe5009; --gold-bg:#ffe7db;
+    --bg:#ffffff; --surface:#ffffff; --surface-2:#f1f1f3; --surface-3:#e4e4e8;
+    --fg:#0c0c0c; --muted:#54545b; --faint:#71717a; --line:#e3e3e7;
+    --accent:#fe5009; --accent-soft:#ffe3d5; --accent-ink:#ffffff; --accent-deep:#b23c00;
+    --good:#157a45; --good-bg:#daf1e2; --good-line:#8fd3ab;
+    --bad:#ca1024; --bad-bg:#fbdde1; --bad-line:#eb9ea8;
+    --wait:#6b6b73; --wait-bg:#ebebee;
+    --gold:#b23c00; --gold-bg:#ffe3d5;
     --shadow:0 1px 2px rgba(20,18,12,.06),0 6px 20px rgba(20,18,12,.06);
     --shadow-lg:0 10px 40px rgba(20,18,12,.14);
     --r:16px; --r-sm:10px;
@@ -25,25 +25,25 @@
     --f-body:"Albert Sans",-apple-system,system-ui,sans-serif;
   }
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-    --bg:#0c0c0c; --surface:#161616; --surface-2:#1e1e1f; --surface-3:#2a2a2c;
-    --fg:#f4f4f5; --muted:#a1a1a8; --faint:#6e6e75; --line:#2a2a2c;
-    --accent:#ff6a2b; --accent-soft:#3a1d10; --accent-ink:#1a0d05;
-    --good:#3ddc84; --good-bg:#16311f; --good-line:#2e6b45;
-    --bad:#ff5d6c; --bad-bg:#3a1619; --bad-line:#7a343b;
-    --wait:#8e8e95; --wait-bg:#1e1e1f;
-    --gold:#ff8a3d; --gold-bg:#3a2411;
+    --bg:#0c0c0c; --surface:#171717; --surface-2:#242425; --surface-3:#313133;
+    --fg:#f4f4f5; --muted:#b4b4bb; --faint:#8c8c94; --line:#313133;
+    --accent:#ff6a2b; --accent-soft:#3a1d10; --accent-ink:#1a0d05; --accent-deep:#ff9a52;
+    --good:#43cf84; --good-bg:#16311f; --good-line:#2e6b45;
+    --bad:#ff6b74; --bad-bg:#3a1619; --bad-line:#7a343b;
+    --wait:#9c9ca4; --wait-bg:#242425;
+    --gold:#ff9a52; --gold-bg:#3a2411;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
     --shadow-lg:0 12px 44px rgba(0,0,0,.5);
     color-scheme:dark;
   }}
   :root[data-theme="dark"]{
-    --bg:#0c0c0c; --surface:#161616; --surface-2:#1e1e1f; --surface-3:#2a2a2c;
-    --fg:#f4f4f5; --muted:#a1a1a8; --faint:#6e6e75; --line:#2a2a2c;
-    --accent:#ff6a2b; --accent-soft:#3a1d10; --accent-ink:#1a0d05;
-    --good:#3ddc84; --good-bg:#16311f; --good-line:#2e6b45;
-    --bad:#ff5d6c; --bad-bg:#3a1619; --bad-line:#7a343b;
-    --wait:#8e8e95; --wait-bg:#1e1e1f;
-    --gold:#ff8a3d; --gold-bg:#3a2411;
+    --bg:#0c0c0c; --surface:#171717; --surface-2:#242425; --surface-3:#313133;
+    --fg:#f4f4f5; --muted:#b4b4bb; --faint:#8c8c94; --line:#313133;
+    --accent:#ff6a2b; --accent-soft:#3a1d10; --accent-ink:#1a0d05; --accent-deep:#ff9a52;
+    --good:#43cf84; --good-bg:#16311f; --good-line:#2e6b45;
+    --bad:#ff6b74; --bad-bg:#3a1619; --bad-line:#7a343b;
+    --wait:#9c9ca4; --wait-bg:#242425;
+    --gold:#ff9a52; --gold-bg:#3a2411;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
     --shadow-lg:0 12px 44px rgba(0,0,0,.5);
     color-scheme:dark;
@@ -112,7 +112,7 @@
   .c-who .nm{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .c-who .mt{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
   .tag{font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:2px 7px;border-radius:6px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
-  .tag.ger{background:var(--accent-soft);color:var(--accent)}
+  .tag.ger{background:var(--accent-soft);color:var(--accent-deep)}
   .status{flex:none;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.02em;display:inline-flex;align-items:center;gap:5px}
   .status.ok{background:var(--good-bg);color:var(--good)}
   .status.no{background:var(--bad-bg);color:var(--bad)}
