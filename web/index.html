@@ -305,8 +305,8 @@
 
   var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{db:{schema:"metas"},auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   var currentUser=null, canEdit=false, editMode=false, view="metas";
-  var cfg=null, goalsMap={}, peopleMap={}, currentModal=null;
-  var filters={nivel:"",status:"",equipe:"",sort:"atraso"};
+  var cfg=null, goalsMap={}, peopleMap={}, currentModal=null, myRespKey=null;
+  var filters={nivel:"",status:"",equipe:"",sort:"atraso",mine:false};
   var expanded={}, renderPending=false, photoTargetKey=null;
 
   var el=function(id){return document.getElementById(id)};
@@ -321,6 +321,8 @@
     return s+(un==="%"?"%":"");
   }
   function monthsOf(){return (cfg&&cfg.meses)||["jul","ago","set","out","nov","dez"];}
+  function curMonthKey(){var map={1:"jan",2:"fev",3:"mar",4:"abr",5:"mai",6:"jun",7:"jul",8:"ago",9:"set",10:"out",11:"nov",12:"dez"};var k=map[new Date().getMonth()+1];return (cfg&&cfg.meses&&cfg.meses.indexOf(k)>=0)?k:null;}
+  function myOwn(g){return !canEdit && !!myRespKey && g.respKey===myRespKey;}
   function currentVal(g){
     var ms=monthsOf(),v=null,k=null;
     for(var i=0;i<ms.length;i++){var x=num(g.valores&&g.valores[ms[i]]); if(x!==null){v=x;k=ms[i];}}
@@ -358,6 +360,7 @@
   function filteredGoals(){
     var gs=activeGoals().map(function(g){return {g:g,e:evalGoal(g)};});
     gs=gs.filter(function(x){
+      if(filters.mine&&x.g.respKey!==myRespKey)return false;
       if(filters.nivel&&x.g.nivel!==filters.nivel)return false;
       if(filters.equipe&&x.g.equipe!==filters.equipe)return false;
       if(filters.status&&x.e.st!==filters.status)return false;
@@ -431,7 +434,9 @@
   function renderChips(){
     var eqs={};activeGoals().forEach(function(g){eqs[g.equipe]=(eqs[g.equipe]||0)+1;});
     var keys=Object.keys(eqs).sort();
-    var h='<button class="chip" data-eq="" aria-pressed="'+(filters.equipe===""?"true":"false")+'">Todas as equipes</button>';
+    var h='';
+    if(myRespKey&&!canEdit)h+='<button class="chip" data-mine="1" aria-pressed="'+(filters.mine?"true":"false")+'">★ Minhas metas</button>';
+    h+='<button class="chip" data-eq="" aria-pressed="'+(filters.equipe===""?"true":"false")+'">Todas as equipes</button>';
     keys.forEach(function(k){h+='<button class="chip" data-eq="'+esc(k)+'" aria-pressed="'+(filters.equipe===k?"true":"false")+'">'+esc(k)+' <span class="ct">'+eqs[k]+'</span></button>';});
     el("chipsEquipe").innerHTML=h;
   }
@@ -450,7 +455,9 @@
     h+='<div class="c-top">'+avaHTML(g.respKey,p.nome);
     h+='<div class="c-who"><div class="nm">'+esc(p.nome)+'</div><div class="mt">';
     h+='<span class="tag '+(g.nivel==="Gerencial"?"ger":"")+'">'+esc(g.nivel)+'</span>';
-    h+='<span class="tag">'+esc(g.equipe)+'</span></div></div>';
+    h+='<span class="tag">'+esc(g.equipe)+'</span>';
+    h+=(myOwn(g)?'<span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)">Sua meta</span>':'');
+    h+='</div></div>';
     h+='<span class="status '+e.st+'">'+stTxt+'</span></div>';
     h+='<div class="c-mid"><div class="c-ind">'+esc(g.indicador)+'</div>';
     h+='<div class="c-data"><div class="bignum '+e.st+'"><b>'+curTxt+'</b><small>'+mesTxt+'</small></div>';
@@ -465,12 +472,14 @@
     h+='<div class="row"><span class="lbl">Detalhamento</span><p>'+esc(g.detalhamento||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Fonte</span><p>'+esc(g.fonte||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Rito de revisão</span><p>'+esc(g.rito||"—")+(g.inicial?' · Inicial: '+esc(g.inicial):'')+'</p></div>';
+    if(myOwn(g)&&curMonthKey())h+='<div class="hint">Você pode atualizar o valor de <b>'+MONTH_LABELS[curMonthKey()]+'</b> aqui — os meses anteriores ficam travados.</div>';
     h+='<div class="row"><span class="lbl">Evolução no semestre</span><div class="months">';
     ms.forEach(function(m){
       var v=num(g.valores&&g.valores[m]),cls="";
       if(v!==null){var ok=g.direcao==="menor"?v<=g.target:v>=g.target;cls=ok?"hit":"miss";}
+      var canCell=(editMode&&canEdit)||(myOwn(g)&&m===curMonthKey());
       h+='<div class="mo '+cls+'"><div class="ml">'+MONTH_LABELS[m]+'</div>';
-      if(editMode)h+='<input data-mo="'+m+'" data-id="'+g.id+'" value="'+(v===null?"":fmt(v,"").replace("%",""))+'" inputmode="decimal">';
+      if(canCell)h+='<input data-mo="'+m+'" data-id="'+g.id+'" value="'+(v===null?"":fmt(v,"").replace("%",""))+'" inputmode="decimal">';
       else h+='<div class="mvv">'+fmt(v,g.unidade)+'</div>';
       h+='</div>';
     });
@@ -519,7 +528,7 @@
 
   // ---------- supabase data ----------
   function mapGoal(r){return {id:r.id,semestre:r.semestre,equipe:r.equipe,nivel:r.nivel,rito:r.rito,indicador:r.indicador,meta:r.meta,op:r.op,target:r.target,unidade:r.unidade,direcao:r.direcao,detalhamento:r.detalhamento,fonte:r.fonte,responsavel:r.responsavel,respKey:r.resp_key,inicial:r.inicial,valores:r.valores||{},ordem:r.ordem};}
-  function mapPerson(r){return {id:r.id,nome:r.nome,equipe:r.equipe,cor:r.cor,fotoUrl:r.foto_url};}
+  function mapPerson(r){return {id:r.id,nome:r.nome,equipe:r.equipe,cor:r.cor,fotoUrl:r.foto_url,email:r.email};}
   function goalToRow(p){
     var m={indicador:"indicador",meta:"meta",op:"op",target:"target",unidade:"unidade",direcao:"direcao",nivel:"nivel",equipe:"equipe",rito:"rito",detalhamento:"detalhamento",fonte:"fonte",responsavel:"responsavel",respKey:"resp_key",inicial:"inicial",valores:"valores",semestre:"semestre",ordem:"ordem"};
     var o={};for(var k in p)if(m[k])o[m[k]]=p[k];o.atualizado_em=new Date().toISOString();return o;
@@ -534,6 +543,8 @@
       if(gc.error)console.warn("goals",gc.error);
       if(gc.data){goalsMap={};gc.data.forEach(function(r){goalsMap[r.id]=mapGoal(r);});}
       if(pc.data){peopleMap={};pc.data.forEach(function(r){peopleMap[r.id]=mapPerson(r);});}
+      myRespKey=null;var _em=(currentUser&&currentUser.email||"").toLowerCase();
+      if(_em){for(var _k in peopleMap){if((peopleMap[_k].email||"").toLowerCase()===_em){myRespKey=_k;break;}}}
       cfg=(cc&&cc.data)?{semestreAtivo:cc.data.semestre_ativo,semLabel:cc.data.sem_label,meses:cc.data.meses||["jul","ago","set","out","nov","dez"]}:{semestreAtivo:"2026-2",semLabel:"2º Semestre 2026",meses:["jul","ago","set","out","nov","dez"]};
       if(renderPending && document.activeElement && document.activeElement.closest && document.activeElement.closest("#content .mo"))return;
       render();
@@ -550,11 +561,11 @@
     var g=goalsMap[id];if(!g)return;
     var v=raw.trim()===""?null:num(raw);
     var vals={};for(var k in g.valores)vals[k]=g.valores[k];vals[mo]=v;g.valores=vals;
-    sb.from("goals").update({valores:vals,atualizado_em:new Date().toISOString()}).eq("id",id).then(function(r){if(r.error)alert("Erro ao salvar o mês: "+r.error.message);loadAll();});
+    sb.rpc("set_meu_valor",{p_goal_id:id,p_mes:mo,p_valor:v}).then(function(r){if(r.error)alert("Não foi possível salvar: "+r.error.message);loadAll();});
   }
   function deleteGoal(id){sb.from("goals").delete().eq("id",id).then(function(r){if(r.error)alert("Erro ao excluir: "+r.error.message);expanded[id]=false;loadAll();});}
   function savePerson(k,patch,cb){
-    var m={nome:"nome",equipe:"equipe",cor:"cor",fotoUrl:"foto_url"},o={id:k};
+    var m={nome:"nome",equipe:"equipe",cor:"cor",fotoUrl:"foto_url",email:"email"},o={id:k};
     for(var kk in patch)if(m[kk])o[m[kk]]=patch[kk];o.atualizado_em=new Date().toISOString();
     sb.from("people").upsert(o).then(function(r){if(r.error)alert("Erro ao salvar pessoa: "+r.error.message);loadAll().then(function(){if(cb)cb();});});
   }
@@ -613,7 +624,7 @@
     ppl.forEach(function(k){
       var p=peopleMap[k];
       h+='<div class="prow" data-k="'+esc(k)+'">'+avaHTML(k,p.nome);
-      h+='<div class="pi"><div class="pnn">'+esc(p.nome)+'</div><div class="pee">'+esc(p.equipe||"")+'</div></div>';
+      h+='<div class="pi"><div class="pnn">'+esc(p.nome)+'</div><div class="pee">'+esc(p.equipe||"")+(p.email?' · '+esc(p.email):' · <span style="color:var(--bad)">sem e-mail</span>')+'</div></div>';
       h+='<button class="mini-btn" data-act="photo" data-k="'+esc(k)+'">'+(p.fotoUrl?"Trocar foto":"Add foto")+'</button>';
       h+='<button class="mini-btn" data-act="editperson" data-k="'+esc(k)+'">Editar</button></div>';
     });
@@ -648,7 +659,9 @@
     var isNew=!k,p=k?peopleMap[k]:{nome:"",equipe:""};
     var h='<div class="m-head"><h2>'+(isNew?"Nova pessoa":"Editar pessoa")+'</h2><button class="x" data-act="cfgback">×</button></div><div class="m-body">';
     h+='<div class="field"><label>Nome</label><input id="p-nome" value="'+esc(p.nome)+'" placeholder="Ex.: Guilherme Monteiro"></div>';
-    h+='<div class="field"><label>Equipe</label><input id="p-eq" value="'+esc(p.equipe||"")+'" placeholder="Ex.: Comercial"></div></div><div class="m-foot">';
+    h+='<div class="field"><label>Equipe</label><input id="p-eq" value="'+esc(p.equipe||"")+'" placeholder="Ex.: Comercial"></div>';
+    h+='<div class="field"><label>E-mail de login (@young)</label><input id="p-email" value="'+esc(p.email||"")+'" placeholder="ex.: nome@youngempreendimentos.com.br"></div>';
+    h+='<div class="hint">O e-mail liga a pessoa ao login dela — é por ele que o responsável consegue editar a própria meta do mês.</div></div><div class="m-foot">';
     if(!isNew)h+='<button class="mini-btn del" data-act="delperson" data-k="'+esc(k)+'" style="margin-right:auto">Excluir</button>';
     h+='<button class="btn" data-act="cfgback">Voltar</button><button class="btn accent" data-act="saveperson" data-k="'+esc(k||"")+'">Salvar</button></div>';
     openModal(h);
@@ -679,7 +692,8 @@
     if(ev.target.closest("#btnSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnGoogle")){doLogin();return;}
     if(ev.target===el("ov")){closeModal();return;}
-    var t=ev.target.closest("[data-act],[data-eq]");if(!t)return;
+    var t=ev.target.closest("[data-act],[data-eq],[data-mine]");if(!t)return;
+    if(t.getAttribute("data-mine")){filters.mine=!filters.mine;render();return;}
     var eq=t.getAttribute("data-eq");
     if(eq!==null){filters.equipe=eq;render();return;}
     var act=t.getAttribute("data-act"),id=t.getAttribute("data-id"),k=t.getAttribute("data-k");
@@ -695,9 +709,9 @@
     if(act==="editperson"){personForm(k);return;}
     if(act==="photo"){pickPhoto(k);return;}
     if(act==="saveperson"){
-      var nome=el("p-nome").value.trim();if(!nome)return;var eqv=el("p-eq").value.trim();
-      if(k)savePerson(k,{nome:nome,equipe:eqv},refreshModal);
-      else{var nk=pkey(nome);savePerson(nk,{nome:nome,equipe:eqv,cor:personColor(nk)},refreshModal);}
+      var nome=el("p-nome").value.trim();if(!nome)return;var eqv=el("p-eq").value.trim();var emv=el("p-email")?el("p-email").value.trim():"";
+      if(k)savePerson(k,{nome:nome,equipe:eqv,email:emv},refreshModal);
+      else{var nk=pkey(nome);savePerson(nk,{nome:nome,equipe:eqv,cor:personColor(nk),email:emv},refreshModal);}
       return;
     }
     if(act==="delperson"){deletePerson(k);return;}
