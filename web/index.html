@@ -479,6 +479,7 @@
     h+='<span class="tag '+(g.nivel==="Gerencial"?"ger":"")+'">'+esc(g.nivel)+'</span>';
     h+='<span class="tag">'+esc(g.equipe)+'</span>';
     h+=(myOwn(g)?'<span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)">Sua meta</span>':'');
+    h+=(g.auto?'<span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)" title="Preenchida automaticamente do CRM">⟳ auto</span>':'');
     h+='</div></div>';
     h+='<span class="status '+e.st+'">'+stTxt+'</span></div>';
     h+='<div class="c-mid"><div class="c-ind">'+esc(g.indicador)+'</div>';
@@ -494,12 +495,13 @@
     h+='<div class="row"><span class="lbl">Detalhamento</span><p>'+esc(g.detalhamento||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Fonte</span><p>'+esc(g.fonte||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Rito de revisão</span><p>'+esc(g.rito||"—")+(g.inicial?' · Inicial: '+esc(g.inicial):'')+'</p></div>';
-    if(myOwn(g)&&curMonthKey())h+='<div class="hint">Você pode atualizar o valor de <b>'+MONTH_LABELS[curMonthKey()]+'</b> aqui — os meses anteriores ficam travados.</div>';
+    if(g.auto)h+='<div class="hint">⟳ Preenchida automaticamente do CRM (vendas do mês) — atualiza todo dia.</div>';
+    else if(myOwn(g)&&curMonthKey())h+='<div class="hint">Você pode atualizar o valor de <b>'+MONTH_LABELS[curMonthKey()]+'</b> aqui — os meses anteriores ficam travados.</div>';
     h+='<div class="row"><span class="lbl">Evolução no semestre</span><div class="months">';
     ms.forEach(function(m){
       var v=num(g.valores&&g.valores[m]),cls="";
       if(v!==null){var ok=g.direcao==="menor"?v<=g.target:v>=g.target;cls=ok?"hit":"miss";}
-      var canCell=(editMode&&canEdit)||(myOwn(g)&&m===curMonthKey());
+      var canCell=!g.auto&&((editMode&&canEdit)||(myOwn(g)&&m===curMonthKey()));
       h+='<div class="mo '+cls+'"><div class="ml">'+MONTH_LABELS[m]+'</div>';
       if(canCell)h+='<input data-mo="'+m+'" data-id="'+g.id+'" value="'+(v===null?"":fmt(v,"").replace("%",""))+'" inputmode="decimal">';
       else h+='<div class="mvv">'+fmt(v,g.unidade)+'</div>';
@@ -549,7 +551,7 @@
   }
 
   // ---------- supabase data ----------
-  function mapGoal(r){return {id:r.id,semestre:r.semestre,equipe:r.equipe,nivel:r.nivel,rito:r.rito,indicador:r.indicador,meta:r.meta,op:r.op,target:r.target,unidade:r.unidade,direcao:r.direcao,detalhamento:r.detalhamento,fonte:r.fonte,responsavel:r.responsavel,respKey:r.resp_key,inicial:r.inicial,valores:r.valores||{},ordem:r.ordem};}
+  function mapGoal(r){return {id:r.id,semestre:r.semestre,equipe:r.equipe,nivel:r.nivel,rito:r.rito,indicador:r.indicador,meta:r.meta,op:r.op,target:r.target,unidade:r.unidade,direcao:r.direcao,detalhamento:r.detalhamento,fonte:r.fonte,responsavel:r.responsavel,respKey:r.resp_key,inicial:r.inicial,valores:r.valores||{},ordem:r.ordem,auto:r.auto};}
   function mapPerson(r){return {id:r.id,nome:r.nome,equipe:r.equipe,cor:r.cor,fotoUrl:r.foto_url,email:r.email,status:r.status};}
   function goalToRow(p){
     var m={indicador:"indicador",meta:"meta",op:"op",target:"target",unidade:"unidade",direcao:"direcao",nivel:"nivel",equipe:"equipe",rito:"rito",detalhamento:"detalhamento",fonte:"fonte",responsavel:"responsavel",respKey:"resp_key",inicial:"inicial",valores:"valores",semestre:"semestre",ordem:"ordem"};
@@ -709,6 +711,7 @@
     h+='<div class="frow"><div class="field"><label>Semestre ativo (código)</label><input id="c-semcod" value="'+esc(cfg.semestreAtivo||"")+'" placeholder="ex.: 2027-1"></div>';
     h+='<div class="field"><label>Rótulo</label><input id="c-sem" value="'+esc(cfg.semLabel||"")+'" placeholder="ex.: 1º Semestre 2027"></div></div>';
     h+='<div class="hint">Trocar o <b>código</b> inicia um novo semestre: as metas do semestre atual ficam <b>guardadas</b> e acessíveis pelo seletor de semestre no topo. Depois é só criar as metas novas. Use <b>AAAA-1</b> (jan–jun) ou <b>AAAA-2</b> (jul–dez).</div>';
+    h+='<div><div class="lbl" style="margin-bottom:6px">Indicadores automáticos</div><button class="btn" data-act="recalc" style="align-self:flex-start">⟳ Atualizar vendas do CRM agora</button><div class="hint" style="margin-top:8px">As metas de vendas (marcadas com ⟳ auto) puxam do CRM sozinhas todo dia às 22h. Use o botão para forçar agora.</div></div>';
     h+='<div class="hint">As edições ficam salvas para todos no banco da Young. Só quem está na allowlist (adm e coordenador administrativo) consegue editar.</div>';
     var pend=ppl.filter(function(k){return peopleMap[k].status==="pendente";});
     if(pend.length){
@@ -811,6 +814,7 @@
     if(act==="savegoal"){submitGoal(id);return;}
     if(act==="delgoal"){deleteGoal(id);return;}
     if(act==="savecfg"){saveCfgDoc({semestreAtivo:(el("c-semcod")?el("c-semcod").value.trim():cfg.semestreAtivo),semLabel:el("c-sem").value.trim()});closeModal();return;}
+    if(act==="recalc"){var b=t;b.disabled=true;b.textContent="Atualizando…";sb.rpc("recalcular_autos_admin").then(function(r){if(r.error)alert("Erro: "+r.error.message);else alert("Pronto! "+(r.data||0)+" indicadores de vendas atualizados do CRM.");loadAll().then(refreshModal);});return;}
     if(act==="addperson"){personForm(null);return;}
     if(act==="editperson"){personForm(k);return;}
     if(act==="photo"){pickPhoto(k);return;}
