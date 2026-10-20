@@ -342,6 +342,12 @@
   function monthsOf(){return mesesDoSemestre(viewSemestre);}
   function curMonthKey(){if(!cfg||viewSemestre!==cfg.semestreAtivo)return null;var map={1:"jan",2:"fev",3:"mar",4:"abr",5:"mai",6:"jun",7:"jul",8:"ago",9:"set",10:"out",11:"nov",12:"dez"};var k=map[new Date().getMonth()+1];return (monthsOf().indexOf(k)>=0)?k:null;}
   function myOwn(g){return !canEdit && !!myRespKey && g.respKey===myRespKey;}
+  function autoDesc(a){
+    if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
+    if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
+    if(a==="qualidade_venda")return "% das vendas internas do mês com entrada ≥ 10% do preço do lote (gatilho de entrada), pelo Pingolead/CRM.";
+    return "Conta as vendas internas do consultor no mês (negócios vendidos no Pingolead; vendas com corretor externo não contam pra meta).";
+  }
   function currentVal(g){
     var ms=monthsOf(),v=null,k=null;
     for(var i=0;i<ms.length;i++){var x=num(g.valores&&g.valores[ms[i]]); if(x!==null){v=x;k=ms[i];}}
@@ -495,7 +501,7 @@
     h+='<div class="row"><span class="lbl">Detalhamento</span><p>'+esc(g.detalhamento||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Fonte</span><p>'+esc(g.fonte||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Rito de revisão</span><p>'+esc(g.rito||"—")+(g.inicial?' · Inicial: '+esc(g.inicial):'')+'</p></div>';
-    if(g.auto)h+='<div class="hint">⟳ Preenchida automaticamente '+(g.auto==="novos_parceiros"?"pelos cadastros de parceiros do Pingolead":g.auto==="vso"?"pelos contratos emitidos no Sienge (acumulado)":"pelas vendas do CRM (Pingolead)")+' — atualiza todo dia.</div>';
+    if(g.auto)h+='<div class="hint">⟳ <b>Preenchida automaticamente, atualiza todo dia.</b> '+autoDesc(g.auto)+'</div>';
     else if(myOwn(g)&&curMonthKey())h+='<div class="hint">Você pode atualizar o valor de <b>'+MONTH_LABELS[curMonthKey()]+'</b> aqui — os meses anteriores ficam travados.</div>';
     h+='<div class="row"><span class="lbl">Evolução no semestre</span><div class="months">';
     ms.forEach(function(m){
