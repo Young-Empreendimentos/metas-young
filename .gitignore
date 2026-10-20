@@ -1,0 +1,10 @@
+# temporários
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# planilhas-fonte / dados brutos (não versionar)
+*.xlsx
+*.xls
+*.HEIC

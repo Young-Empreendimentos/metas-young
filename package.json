@@ -1,0 +1,12 @@
+{
+  "name": "metas-young",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Painel de metas semestrais da Young (frontend estático + Supabase)",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
