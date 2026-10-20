@@ -225,6 +225,16 @@
   </div>
 </div>
 
+<div class="login" id="pendingScreen" hidden>
+  <div class="box">
+    <div class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <h1>Aguardando aprovação</h1>
+    <p>Seu acesso foi solicitado. Um administrador precisa liberar para você ver o painel.</p>
+    <button class="gbtn" id="btnPendSair">Sair</button>
+    <div class="note">Assim que aprovarem, é só entrar de novo.</div>
+  </div>
+</div>
+
 <div id="app" hidden>
 <header>
   <div class="wrap">
@@ -528,7 +538,7 @@
 
   // ---------- supabase data ----------
   function mapGoal(r){return {id:r.id,semestre:r.semestre,equipe:r.equipe,nivel:r.nivel,rito:r.rito,indicador:r.indicador,meta:r.meta,op:r.op,target:r.target,unidade:r.unidade,direcao:r.direcao,detalhamento:r.detalhamento,fonte:r.fonte,responsavel:r.responsavel,respKey:r.resp_key,inicial:r.inicial,valores:r.valores||{},ordem:r.ordem};}
-  function mapPerson(r){return {id:r.id,nome:r.nome,equipe:r.equipe,cor:r.cor,fotoUrl:r.foto_url,email:r.email};}
+  function mapPerson(r){return {id:r.id,nome:r.nome,equipe:r.equipe,cor:r.cor,fotoUrl:r.foto_url,email:r.email,status:r.status};}
   function goalToRow(p){
     var m={indicador:"indicador",meta:"meta",op:"op",target:"target",unidade:"unidade",direcao:"direcao",nivel:"nivel",equipe:"equipe",rito:"rito",detalhamento:"detalhamento",fonte:"fonte",responsavel:"responsavel",respKey:"resp_key",inicial:"inicial",valores:"valores",semestre:"semestre",ordem:"ordem"};
     var o={};for(var k in p)if(m[k])o[m[k]]=p[k];o.atualizado_em=new Date().toISOString();return o;
@@ -543,8 +553,6 @@
       if(gc.error)console.warn("goals",gc.error);
       if(gc.data){goalsMap={};gc.data.forEach(function(r){goalsMap[r.id]=mapGoal(r);});}
       if(pc.data){peopleMap={};pc.data.forEach(function(r){peopleMap[r.id]=mapPerson(r);});}
-      myRespKey=null;var _em=(currentUser&&currentUser.email||"").toLowerCase();
-      if(_em){for(var _k in peopleMap){if((peopleMap[_k].email||"").toLowerCase()===_em){myRespKey=_k;break;}}}
       cfg=(cc&&cc.data)?{semestreAtivo:cc.data.semestre_ativo,semLabel:cc.data.sem_label,meses:cc.data.meses||["jul","ago","set","out","nov","dez"]}:{semestreAtivo:"2026-2",semLabel:"2º Semestre 2026",meses:["jul","ago","set","out","nov","dez"]};
       if(renderPending && document.activeElement && document.activeElement.closest && document.activeElement.closest("#content .mo"))return;
       render();
@@ -565,7 +573,7 @@
   }
   function deleteGoal(id){sb.from("goals").delete().eq("id",id).then(function(r){if(r.error)alert("Erro ao excluir: "+r.error.message);expanded[id]=false;loadAll();});}
   function savePerson(k,patch,cb){
-    var m={nome:"nome",equipe:"equipe",cor:"cor",fotoUrl:"foto_url",email:"email"},o={id:k};
+    var m={nome:"nome",equipe:"equipe",cor:"cor",fotoUrl:"foto_url",email:"email",status:"status"},o={id:k};
     for(var kk in patch)if(m[kk])o[m[kk]]=patch[kk];o.atualizado_em=new Date().toISOString();
     sb.from("people").upsert(o).then(function(r){if(r.error)alert("Erro ao salvar pessoa: "+r.error.message);loadAll().then(function(){if(cb)cb();});});
   }
@@ -620,11 +628,22 @@
     var h='<div class="m-head"><h2>Configurações</h2><button class="x" data-act="close">×</button></div><div class="m-body">';
     h+='<div class="field"><label>Semestre ativo (rótulo)</label><input id="c-sem" value="'+esc(cfg.semLabel||cfg.semestreAtivo)+'"></div>';
     h+='<div class="hint">As edições ficam salvas para todos no banco da Young. Só quem está na allowlist (adm e coordenador administrativo) consegue editar.</div>';
+    var pend=ppl.filter(function(k){return peopleMap[k].status==="pendente";});
+    if(pend.length){
+      h+='<div><div class="lbl" style="margin-bottom:8px">Solicitações de acesso ('+pend.length+')</div><div class="plist">';
+      pend.forEach(function(k){var p=peopleMap[k];
+        h+='<div class="prow" data-k="'+esc(k)+'">'+avaHTML(k,p.nome);
+        h+='<div class="pi"><div class="pnn">'+esc(p.nome)+'</div><div class="pee">'+esc(p.email||"")+'</div></div>';
+        h+='<button class="mini-btn" data-act="aprovar" data-k="'+esc(k)+'">Aprovar</button>';
+        h+='<button class="mini-btn del" data-act="recusar" data-k="'+esc(k)+'">Recusar</button></div>';
+      });
+      h+='</div></div>';
+    }
     h+='<div><div class="lbl" style="margin-bottom:8px">Pessoas &amp; fotos</div><div class="plist">';
     ppl.forEach(function(k){
       var p=peopleMap[k];
       h+='<div class="prow" data-k="'+esc(k)+'">'+avaHTML(k,p.nome);
-      h+='<div class="pi"><div class="pnn">'+esc(p.nome)+'</div><div class="pee">'+esc(p.equipe||"")+(p.email?' · '+esc(p.email):' · <span style="color:var(--bad)">sem e-mail</span>')+'</div></div>';
+      h+='<div class="pi"><div class="pnn">'+esc(p.nome)+'</div><div class="pee">'+esc(p.equipe||"")+(p.email?' · '+esc(p.email):' · <span style="color:var(--bad)">sem e-mail</span>')+(p.status==="pendente"?' · <span style="color:var(--gold)">pendente</span>':'')+'</div></div>';
       h+='<button class="mini-btn" data-act="photo" data-k="'+esc(k)+'">'+(p.fotoUrl?"Trocar foto":"Add foto")+'</button>';
       h+='<button class="mini-btn" data-act="editperson" data-k="'+esc(k)+'">Editar</button></div>';
     });
@@ -690,6 +709,7 @@
     if(ev.target.closest("#btnEdit")){if(canEdit){editMode=!editMode;render();}return;}
     if(ev.target.closest("#btnCfg")){if(canEdit)cfgModal();return;}
     if(ev.target.closest("#btnSair")){sb.auth.signOut({scope:"local"});return;}
+    if(ev.target.closest("#btnPendSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnGoogle")){doLogin();return;}
     if(ev.target===el("ov")){closeModal();return;}
     var t=ev.target.closest("[data-act],[data-eq],[data-mine]");if(!t)return;
@@ -711,10 +731,12 @@
     if(act==="saveperson"){
       var nome=el("p-nome").value.trim();if(!nome)return;var eqv=el("p-eq").value.trim();var emv=el("p-email")?el("p-email").value.trim():"";
       if(k)savePerson(k,{nome:nome,equipe:eqv,email:emv},refreshModal);
-      else{var nk=pkey(nome);savePerson(nk,{nome:nome,equipe:eqv,cor:personColor(nk),email:emv},refreshModal);}
+      else{var nk=pkey(nome);savePerson(nk,{nome:nome,equipe:eqv,cor:personColor(nk),email:emv,status:"ativo"},refreshModal);}
       return;
     }
     if(act==="delperson"){deletePerson(k);return;}
+    if(act==="aprovar"){savePerson(k,{status:"ativo"},refreshModal);return;}
+    if(act==="recusar"){deletePerson(k);return;}
   });
   document.addEventListener("change",function(ev){
     var mo=ev.target.closest("#content .mo input");
@@ -738,17 +760,19 @@
   function doLogin(){
     sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:"select_account"}}});
   }
-  function showLogin(){el("loginScreen").hidden=false;el("app").hidden=true;}
-  function checkAdmin(){
-    var email=(currentUser&&currentUser.email||"").toLowerCase();
-    return sb.from("admins").select("email").then(function(r){
-      canEdit=!!(r.data&&r.data.some(function(a){return (a.email||"").toLowerCase()===email;}));
-    }).catch(function(){canEdit=false;});
-  }
+  function showLogin(){el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;}
   function afterLogin(){
-    el("loginScreen").hidden=true;el("app").hidden=false;
-    var uc=el("userChip");uc.hidden=false;uc.textContent=(currentUser.email||"").split("@")[0];
-    checkAdmin().then(loadAll);
+    sb.rpc("entrar").then(function(r){
+      var d=(r&&r.data)||{};
+      canEdit=!!d.admin; myRespKey=d.respKey||null;
+      if(d.admin||d.status==="ativo"){
+        el("loginScreen").hidden=true;el("pendingScreen").hidden=true;el("app").hidden=false;
+        var uc=el("userChip");uc.hidden=false;uc.textContent=(currentUser.email||"").split("@")[0];
+        loadAll();
+      }else{
+        el("loginScreen").hidden=true;el("app").hidden=true;el("pendingScreen").hidden=false;
+      }
+    }).catch(function(){el("loginScreen").hidden=true;el("app").hidden=true;el("pendingScreen").hidden=false;});
   }
   function boot(){
     sb.auth.getSession().then(function(res){
