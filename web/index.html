@@ -289,6 +289,10 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.9 1.15V22a2 2 0 01-4 0v-.09A1.65 1.65 0 006 20.4l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 003.6 15H3.5a2 2 0 010-4H3.6a1.65 1.65 0 001.5-2.9l-.06-.06A2 2 0 118 5.07l.06.06A1.65 1.65 0 0011 4.6V4.5a2 2 0 014 0v.09a1.65 1.65 0 002.9 1.5l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0020.4 11h.1a2 2 0 010 4z"/></svg>
         Config
       </button>
+      <button class="btn" id="btnRel">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        Relatório
+      </button>
       <button class="iconbtn" id="btnTheme" aria-label="Alternar tema claro/escuro" title="Tema claro/escuro"></button>
       <button class="iconbtn" id="btnSair" aria-label="Sair" title="Sair">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -318,6 +322,7 @@
   var currentUser=null, canEdit=false, editMode=false, view="metas";
   var cfg=null, goalsMap={}, peopleMap={}, currentModal=null, myRespKey=null, viewSemestre=null;
   var filters={nivel:"",status:"",equipe:"",sort:"atraso",mine:false};
+  var relMes=null;
   var expanded={}, renderPending=false, photoTargetKey=null;
 
   var el=function(id){return document.getElementById(id)};
@@ -629,6 +634,74 @@
     else{patch.direcao=(op==="<"||op==="<=")?"menor":"maior";var nid=newId();patch.valores={};monthsOf().forEach(function(mm){patch.valores[mm]=null;});patch.inicial="";saveGoal(nid,patch);}
     closeModal();
   }
+  function evalGoalAt(g,mes){
+    var v=num(g.valores&&g.valores[mes]);
+    if(v===null)return {st:"wt",v:null};
+    var ok=g.direcao==="menor"?v<=g.target:v>=g.target;
+    return {st:ok?"ok":"no",v:v};
+  }
+  function ultimoMesComDado(){var ms=monthsOf(),gs=activeGoals(),last=ms[0];ms.forEach(function(m){if(gs.some(function(g){return num(g.valores&&g.valores[m])!==null;}))last=m;});return last;}
+  function relatorioBody(){
+    var gs=activeGoals().map(function(g){return {g:g,e:evalGoalAt(g,relMes)};});
+    var ok=0,no=0,wt=0;gs.forEach(function(x){if(x.e.st==="ok")ok++;else if(x.e.st==="no")no++;else wt++;});
+    var tot=ok+no,pct=tot?Math.round(ok/tot*100):0;
+    var h='<div class="hint"><b>'+pct+'% no alvo</b> em '+MONTH_LABELS[relMes]+' · '+ok+' no alvo · '+no+' fora · '+wt+' aguardando</div>';
+    var byEq={};gs.forEach(function(x){(byEq[x.g.equipe]=byEq[x.g.equipe]||[]).push(x);});
+    Object.keys(byEq).sort().forEach(function(eq){
+      h+='<div style="margin-top:12px"><div class="lbl" style="margin-bottom:6px">'+esc(eq)+'</div><div class="p-goals">';
+      byEq[eq].forEach(function(x){
+        var cl=x.e.st==="ok"?"g":x.e.st==="no"?"r":"w";
+        h+='<div class="pg"><span class="st '+cl+'"></span><span class="gi">'+esc(x.g.indicador)+' <span style="color:var(--muted)">('+esc(person(x.g.respKey).nome)+')</span></span><span class="gv '+cl+'">'+fmt(x.e.v,x.g.unidade)+' / '+esc(x.g.meta)+'</span></div>';
+      });
+      h+='</div></div>';
+    });
+    return h;
+  }
+  function relatorioModal(){
+    currentModal="rel";
+    if(!relMes||monthsOf().indexOf(relMes)<0)relMes=ultimoMesComDado();
+    var ms=monthsOf();
+    var h='<div class="m-head"><h2>Relatório · '+esc(labelDoSemestre(viewSemestre))+'</h2><button class="x" data-act="close">×</button></div><div class="m-body">';
+    h+='<div class="field"><label>Mês de referência</label><select id="rel-mes">'+ms.map(function(m){return '<option value="'+m+'"'+(m===relMes?" selected":"")+'>'+MONTH_LABELS[m]+'</option>';}).join("")+'</select></div>';
+    h+='<div id="relBody">'+relatorioBody()+'</div></div>';
+    h+='<div class="m-foot"><button class="btn" data-act="relcsv">Baixar CSV</button><button class="btn" data-act="relprint">Imprimir</button><button class="btn accent" data-act="relcopy">Copiar resumo</button></div>';
+    openModal(h);
+  }
+  function relatorioTexto(){
+    var gs=activeGoals().map(function(g){return {g:g,e:evalGoalAt(g,relMes)};});
+    var ok=0,no=0,wt=0;gs.forEach(function(x){if(x.e.st==="ok")ok++;else if(x.e.st==="no")no++;else wt++;});
+    var pct=(ok+no)?Math.round(ok/(ok+no)*100):0;
+    var L=["Metas Young - "+labelDoSemestre(viewSemestre)+" ("+MONTH_LABELS[relMes]+")","No alvo: "+ok+"/"+(ok+no+wt)+" ("+pct+"%) · Fora: "+no+" · Aguardando: "+wt];
+    var byEq={};gs.forEach(function(x){(byEq[x.g.equipe]=byEq[x.g.equipe]||[]).push(x);});
+    Object.keys(byEq).sort().forEach(function(eq){
+      L.push("");L.push(eq.toUpperCase());
+      byEq[eq].forEach(function(x){var ic=x.e.st==="ok"?"🟢":x.e.st==="no"?"🔴":"⚪";L.push(ic+" "+x.g.indicador+" ("+person(x.g.respKey).nome+"): "+fmt(x.e.v,x.g.unidade)+" / meta "+x.g.meta);});
+    });
+    return L.join("\n");
+  }
+  function relatorioCSV(){
+    var ms=monthsOf();
+    var head=["Equipe","Nivel","Indicador","Responsavel","Meta"].concat(ms.map(function(m){return MONTH_LABELS[m];})).concat(["Status ("+MONTH_LABELS[relMes]+")"]);
+    var rows=[head];
+    activeGoals().forEach(function(g){
+      var e=evalGoalAt(g,relMes),st=e.st==="ok"?"No alvo":e.st==="no"?"Fora":"Aguardando";
+      rows.push([g.equipe,g.nivel,g.indicador,person(g.respKey).nome,g.meta].concat(ms.map(function(m){var v=num(g.valores&&g.valores[m]);return v===null?"":String(v).replace(".",",");})).concat([st]));
+    });
+    return rows.map(function(r){return r.map(function(c){var s=String(c==null?"":c);return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(";");}).join("\n");
+  }
+  function baixar(nome,conteudo,tipo){
+    try{var blob=new Blob(["﻿"+conteudo],{type:(tipo||"text/plain")+";charset=utf-8"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download=nome;document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},120);}catch(e){alert("Não foi possível baixar: "+e.message);}
+  }
+  function copiar(txt){
+    try{navigator.clipboard.writeText(txt).then(function(){alert("Resumo copiado! Cole no e-mail ou WhatsApp.");},function(){baixar("relatorio-metas.txt",txt,"text/plain");});}
+    catch(e){baixar("relatorio-metas.txt",txt,"text/plain");}
+  }
+  function relatorioImprimir(){
+    var w=window.open("","_blank");if(!w){alert("Permita pop-ups para imprimir.");return;}
+    var body='<h1>Metas Young — '+esc(labelDoSemestre(viewSemestre))+' ('+MONTH_LABELS[relMes]+')</h1>'+relatorioBody();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Relatório Metas Young</title><style>body{font-family:system-ui,Arial,sans-serif;padding:28px;color:#111;max-width:820px;margin:auto}h1{font-size:20px}.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#777;font-weight:700}.hint{background:#f4f4f5;border:1px solid #e3e3e7;border-radius:8px;padding:10px 12px;margin:10px 0}.pg{display:flex;gap:8px;align-items:center;font-size:13px;margin:3px 0}.st{width:9px;height:9px;border-radius:50%;flex:none}.st.g{background:#157a45}.st.r{background:#ca1024}.st.w{background:#999}.gi{flex:1}.gv{font-weight:700}.gv.g{color:#157a45}.gv.r{color:#ca1024}.gv.w{color:#666}.p-goals{display:block}</style></head><body>'+body+'</body></html>');
+    w.document.close();w.focus();setTimeout(function(){try{w.print();}catch(e){}},300);
+  }
   function cfgModal(){
     currentModal="cfg";
     var ppl=Object.keys(peopleMap).sort(function(a,b){return peopleMap[a].nome.localeCompare(peopleMap[b].nome);});
@@ -717,6 +790,7 @@
     if(ev.target.closest("#vPessoas")){view="pessoas";render();return;}
     if(ev.target.closest("#btnEdit")){if(canEdit){editMode=!editMode;render();}return;}
     if(ev.target.closest("#btnCfg")){if(canEdit)cfgModal();return;}
+    if(ev.target.closest("#btnRel")){relatorioModal();return;}
     if(ev.target.closest("#btnSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnPendSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnGoogle")){doLogin();return;}
@@ -728,6 +802,9 @@
     var act=t.getAttribute("data-act"),id=t.getAttribute("data-id"),k=t.getAttribute("data-k");
     if(act==="detail"){expanded[id]=!expanded[id];render();return;}
     if(act==="close"){closeModal();return;}
+    if(act==="relcopy"){copiar(relatorioTexto());return;}
+    if(act==="relcsv"){baixar("metas-"+viewSemestre+"-"+relMes+".csv",relatorioCSV(),"text/csv");return;}
+    if(act==="relprint"){relatorioImprimir();return;}
     if(act==="cfgback"){cfgModal();return;}
     if(act==="newgoal"){goalForm(null);return;}
     if(act==="editgoal"){goalForm(goalsMap[id]);return;}
@@ -749,7 +826,9 @@
   });
   document.addEventListener("change",function(ev){
     var mo=ev.target.closest("#content .mo input");
-    if(mo)saveMonth(mo.getAttribute("data-id"),mo.getAttribute("data-mo"),mo.value);
+    if(mo){saveMonth(mo.getAttribute("data-id"),mo.getAttribute("data-mo"),mo.value);return;}
+    var rm=ev.target.closest("#rel-mes");
+    if(rm){relMes=rm.value;var rb=el("relBody");if(rb)rb.innerHTML=relatorioBody();}
   });
   document.addEventListener("focusout",function(){setTimeout(function(){if(renderPending&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#content .mo")))render();},60);});
   el("selSem").addEventListener("change",function(e){viewSemestre=e.target.value;render();});
