@@ -495,7 +495,7 @@
     h+='<div class="row"><span class="lbl">Detalhamento</span><p>'+esc(g.detalhamento||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Fonte</span><p>'+esc(g.fonte||"—")+'</p></div>';
     h+='<div class="row"><span class="lbl">Rito de revisão</span><p>'+esc(g.rito||"—")+(g.inicial?' · Inicial: '+esc(g.inicial):'')+'</p></div>';
-    if(g.auto)h+='<div class="hint">⟳ Preenchida automaticamente do CRM (vendas do mês) — atualiza todo dia.</div>';
+    if(g.auto)h+='<div class="hint">⟳ Preenchida automaticamente '+(g.auto==="novos_parceiros"?"pelos cadastros de parceiros do Pingolead":"pelas vendas do CRM (Pingolead)")+' — atualiza todo dia.</div>';
     else if(myOwn(g)&&curMonthKey())h+='<div class="hint">Você pode atualizar o valor de <b>'+MONTH_LABELS[curMonthKey()]+'</b> aqui — os meses anteriores ficam travados.</div>';
     h+='<div class="row"><span class="lbl">Evolução no semestre</span><div class="months">';
     ms.forEach(function(m){
