@@ -322,7 +322,7 @@
   var currentUser=null, canEdit=false, editMode=false, view="metas";
   var cfg=null, goalsMap={}, peopleMap={}, currentModal=null, myRespKey=null, viewSemestre=null;
   var filters={nivel:"",status:"",equipe:"",sort:"atraso",mine:false};
-  var relMes=null;
+  var relMes=null, lastLoadTs=0;
   var expanded={}, renderPending=false, photoTargetKey=null;
 
   var el=function(id){return document.getElementById(id)};
@@ -568,6 +568,7 @@
       if(gc.data){goalsMap={};gc.data.forEach(function(r){goalsMap[r.id]=mapGoal(r);});}
       if(pc.data){peopleMap={};pc.data.forEach(function(r){peopleMap[r.id]=mapPerson(r);});}
       cfg=(cc&&cc.data)?{semestreAtivo:cc.data.semestre_ativo,semLabel:cc.data.sem_label,meses:cc.data.meses||["jul","ago","set","out","nov","dez"]}:{semestreAtivo:"2026-2",semLabel:"2º Semestre 2026",meses:["jul","ago","set","out","nov","dez"]};
+      lastLoadTs=Date.now();
       if(renderPending && document.activeElement && document.activeElement.closest && document.activeElement.closest("#content .mo"))return;
       render();
     }).catch(function(e){console.warn("loadAll",e);});
@@ -847,7 +848,7 @@
   function updateThemeIcon(){var b=el("btnTheme");if(b)b.innerHTML=currentTheme()==="dark"?ICON_SUN:ICON_MOON;}
   el("btnTheme").addEventListener("click",function(){setTheme(currentTheme()==="dark"?"light":"dark");});
   updateThemeIcon();
-  window.addEventListener("focus",function(){if(currentUser)loadAll();});
+  window.addEventListener("focus",function(){if(currentUser&&Date.now()-lastLoadTs>60000)loadAll();});
 
   // ---------- auth ----------
   function doLogin(){
