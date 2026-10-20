@@ -91,6 +91,8 @@
   .btn.accent{background:var(--accent);color:var(--accent-ink);border-color:transparent}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn svg{display:block}
+  .iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:9px;width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
+  .iconbtn:hover{color:var(--fg);background:var(--surface-2)}
   .userchip{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600}
 
   .chips{display:flex;gap:7px;flex-wrap:wrap;padding-block:0 12px}
@@ -268,7 +270,6 @@
       </select>
       <div class="spacer"></div>
       <span class="userchip" id="userChip" hidden></span>
-      <button class="btn" id="btnTheme" aria-label="Alternar tema claro/escuro" title="Tema claro/escuro"></button>
       <button class="btn" id="btnEdit">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
         Modo edição
@@ -277,11 +278,10 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.9 1.15V22a2 2 0 01-4 0v-.09A1.65 1.65 0 006 20.4l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 003.6 15H3.5a2 2 0 010-4H3.6a1.65 1.65 0 001.5-2.9l-.06-.06A2 2 0 118 5.07l.06.06A1.65 1.65 0 0011 4.6V4.5a2 2 0 014 0v.09a1.65 1.65 0 002.9 1.5l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0020.4 11h.1a2 2 0 010 4z"/></svg>
         Config
       </button>
-      <button class="btn" id="btnHist" hidden>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>
-        Histórico
+      <button class="iconbtn" id="btnTheme" aria-label="Alternar tema claro/escuro" title="Tema claro/escuro"></button>
+      <button class="iconbtn" id="btnSair" aria-label="Sair" title="Sair">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
-      <button class="btn" id="btnSair">Sair</button>
     </div>
     <div class="chips" id="chipsEquipe"></div>
   </div>
@@ -408,7 +408,6 @@
     el("vMetas").setAttribute("aria-pressed",view==="metas");
     el("vPessoas").setAttribute("aria-pressed",view==="pessoas");
     el("btnCfg").hidden=!canEdit;
-    el("btnHist").hidden=!canEdit;
     var be=el("btnEdit");
     be.classList.toggle("accent",editMode);
     be.childNodes[be.childNodes.length-1].nodeValue=editMode?" Editando":" Modo edição";
@@ -478,7 +477,6 @@
     h+='</div></div>';
     if(editMode){
       h+='<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">';
-      h+='<button class="mini-btn" data-act="dir" data-id="'+g.id+'">Direção: '+(g.direcao==="menor"?"menor é melhor":"maior é melhor")+'</button>';
       h+='<button class="mini-btn" data-act="editgoal" data-id="'+g.id+'">Editar meta</button>';
       h+='<button class="mini-btn del" data-act="delgoal" data-id="'+g.id+'">Excluir</button></div>';
     }
@@ -583,8 +581,7 @@
     var h='<div class="m-head"><h2>'+(isNew?"Nova meta":"Editar meta")+'</h2><button class="x" data-act="close">×</button></div><div class="m-body">';
     h+='<div class="field"><label>Indicador</label><input id="f-ind" value="'+esc(g.indicador)+'" placeholder="Ex.: Vendas realizadas"></div>';
     h+='<div class="frow"><div class="field"><label>Meta</label><input id="f-meta" value="'+esc(g.meta)+'" placeholder="Ex.: >=2, 100%, <=5"></div>';
-    h+='<div class="field"><label>Unidade</label><select id="f-un"><option value="num"'+(g.unidade==="num"?" selected":"")+'>Número</option><option value="%"'+(g.unidade==="%"?" selected":"")+'>Percentual</option></select></div>';
-    h+='<div class="field"><label>Direção</label><select id="f-dir"><option value="maior"'+(g.direcao==="maior"?" selected":"")+'>Maior é melhor</option><option value="menor"'+(g.direcao==="menor"?" selected":"")+'>Menor é melhor</option></select></div></div>';
+    h+='<div class="field"><label>Unidade</label><select id="f-un"><option value="num"'+(g.unidade==="num"?" selected":"")+'>Número</option><option value="%"'+(g.unidade==="%"?" selected":"")+'>Percentual</option></select></div></div>';
     h+='<div class="frow"><div class="field"><label>Responsável</label><select id="f-resp"><option value="">—</option>'+peopleOpts+'</select></div>';
     h+='<div class="field"><label>Nível</label><select id="f-niv"><option'+(g.nivel==="Operacional"?" selected":"")+'>Operacional</option><option'+(g.nivel==="Gerencial"?" selected":"")+'>Gerencial</option></select></div></div>';
     h+='<div class="frow"><div class="field"><label>Equipe</label><input id="f-eq" value="'+esc(g.equipe)+'" list="eqlist" placeholder="Ex.: Comercial"><datalist id="eqlist">'+Object.keys(eqs).sort().map(function(e){return '<option value="'+esc(e)+'">';}).join("")+'</datalist></div>';
@@ -598,12 +595,12 @@
     var raw=el("f-meta").value,m=String(raw||"").trim(),op="=";
     ["≥",">=","≤","<=",">","<"].some(function(c){if(m.indexOf(c)===0){op=c==="≥"?">=":c==="≤"?"<=":c;return true;}return false;});
     var n=(m.replace("%","").match(/-?\d+[.,]?\d*/)||[])[0];
-    var patch={indicador:el("f-ind").value.trim(),meta:el("f-meta").value.trim(),unidade:el("f-un").value,direcao:el("f-dir").value,op:op,target:n?parseFloat(n.replace(",",".")):0,
+    var patch={indicador:el("f-ind").value.trim(),meta:el("f-meta").value.trim(),unidade:el("f-un").value,op:op,target:n?parseFloat(n.replace(",",".")):0,
       respKey:el("f-resp").value,responsavel:el("f-resp").value?peopleMap[el("f-resp").value].nome:"",nivel:el("f-niv").value,equipe:el("f-eq").value.trim(),rito:el("f-rito").value.trim(),
       detalhamento:el("f-det").value.trim(),fonte:el("f-fonte").value.trim(),semestre:cfg.semestreAtivo};
     if(!patch.indicador){el("f-ind").focus();return;}
     if(id&&goalsMap[id])saveGoal(id,patch);
-    else{var nid=newId();patch.valores={};monthsOf().forEach(function(mm){patch.valores[mm]=null;});patch.inicial="";saveGoal(nid,patch);}
+    else{patch.direcao=(op==="<"||op==="<=")?"menor":"maior";var nid=newId();patch.valores={};monthsOf().forEach(function(mm){patch.valores[mm]=null;});patch.inicial="";saveGoal(nid,patch);}
     closeModal();
   }
   function cfgModal(){
@@ -679,7 +676,6 @@
     if(ev.target.closest("#vPessoas")){view="pessoas";render();return;}
     if(ev.target.closest("#btnEdit")){if(canEdit){editMode=!editMode;render();}return;}
     if(ev.target.closest("#btnCfg")){if(canEdit)cfgModal();return;}
-    if(ev.target.closest("#btnHist")){if(canEdit)histModal();return;}
     if(ev.target.closest("#btnSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnGoogle")){doLogin();return;}
     if(ev.target===el("ov")){closeModal();return;}
@@ -694,7 +690,6 @@
     if(act==="editgoal"){goalForm(goalsMap[id]);return;}
     if(act==="savegoal"){submitGoal(id);return;}
     if(act==="delgoal"){deleteGoal(id);return;}
-    if(act==="dir"){var g=goalsMap[id];if(g)saveGoal(id,{direcao:g.direcao==="menor"?"maior":"menor"});return;}
     if(act==="savecfg"){saveCfgDoc({semLabel:el("c-sem").value.trim()});closeModal();return;}
     if(act==="addperson"){personForm(null);return;}
     if(act==="editperson"){personForm(k);return;}
