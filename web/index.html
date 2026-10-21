@@ -484,6 +484,7 @@
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
     if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
+    if(a==="obra_paver")return "% de conclusão física da obra pela Dashboard de Serviços do Paver: só serviços com tag (mão de obra), cada item limitado ao previsto, soma do executado ÷ soma do previsto. A obra vem do campo 'Valor inicial/base' (nome da obra) ou do nome contido no indicador.";
     if(a==="qualidade_venda")return "% das vendas internas do mês com entrada ≥ 10% do preço do lote (gatilho de entrada), pelo Pingolead/CRM.";
     return "Conta as vendas internas do consultor no mês (negócios vendidos no Pingolead; vendas com corretor externo não contam pra meta).";
   }
@@ -899,6 +900,7 @@
       +'<option value="vendas_internas"'+(g.auto==="vendas_internas"?" selected":"")+'>Vendas do consultor — no mês (por pessoa)</option>'
       +'<option value="qualidade_venda"'+(g.auto==="qualidade_venda"?" selected":"")+'>Qualidade de Venda — gatilho de entrada (por pessoa)</option>'
       +'<option value="novos_parceiros"'+(g.auto==="novos_parceiros"?" selected":"")+'>Novos parceiros cadastrados — no mês (empresa)</option>'
+      +'<option value="obra_paver"'+(g.auto==="obra_paver"?" selected":"")+'>Conclusão física da obra — Paver, Dashboard de Serviços (obra pelo nome)</option>'
       +'<option value="vso"'+(g.auto==="vso"?" selected":"")+'>VSO — acumulado no semestre (empresa, Sienge)</option>'
       +'</select></div>';
     h+='<div class="hint">Com uma automação escolhida, a meta se preenche sozinha todo dia e deixa de ser editável na mão. As opções "por pessoa" usam o <b>responsável</b> acima — ele precisa ter o <b>e-mail de login</b> vinculado na Config.</div></div>';
