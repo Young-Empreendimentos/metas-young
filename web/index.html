@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
 <script>try{var _t=localStorage.getItem('metas-theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <style>
   /* Layout: placar fixo no topo + barra de filtros sticky + grade de cards de metas / ranking de pessoas */
@@ -913,20 +914,67 @@
     var h='<div class="m-head"><h2>Relatório · '+esc(labelDoSemestre(viewSemestre))+'</h2><button class="x" data-act="close">×</button></div><div class="m-body">';
     h+='<div class="field"><label>Mês de referência</label><select id="rel-mes">'+ms.map(function(m){return '<option value="'+m+'"'+(m===relMes?" selected":"")+'>'+MONTH_LABELS[m]+'</option>';}).join("")+'</select></div>';
     h+='<div id="relBody">'+relatorioBody()+'</div></div>';
-    h+='<div class="m-foot"><button class="btn" data-act="relcsv">Baixar CSV</button><button class="btn" data-act="relprint">Imprimir</button><button class="btn accent" data-act="relcopy">Copiar resumo</button></div>';
+    h+='<div class="m-foot" style="flex-wrap:wrap"><button class="btn" data-act="relcsv">CSV</button><button class="btn" data-act="relprint">Imprimir</button><button class="btn" data-act="relxlsx">Baixar planilha (Excel)</button><button class="btn accent" data-act="relcopy">Copiar e-mail</button></div>';
     openModal(h);
   }
+  var MONTH_FULL={jan:"Janeiro",fev:"Fevereiro",mar:"Março",abr:"Abril",mai:"Maio",jun:"Junho",jul:"Julho",ago:"Agosto",set:"Setembro",out:"Outubro",nov:"Novembro",dez:"Dezembro"};
+  function mesesAteRel(){var ms=monthsOf(),i=ms.indexOf(relMes);return i<0?ms:ms.slice(0,i+1);}
+  function anoDoSemestre(){var m=/(\d{4})/.exec(viewSemestre||"");return m?m[1]:String(new Date().getFullYear());}
   function relatorioTexto(){
     var gs=activeGoals().map(function(g){return {g:g,e:evalGoalAt(g,relMes)};});
     var ok=0,no=0,wt=0;gs.forEach(function(x){if(x.e.st==="ok")ok++;else if(x.e.st==="no")no++;else wt++;});
-    var pct=(ok+no)?Math.round(ok/(ok+no)*100):0;
-    var L=["Metas Young - "+labelDoSemestre(viewSemestre)+" ("+MONTH_LABELS[relMes]+")","No alvo: "+ok+"/"+(ok+no+wt)+" ("+pct+"%) · Fora: "+no+" · Aguardando: "+wt];
+    var tot=ok+no,pct=tot?Math.round(ok/tot*100):0;
+    var mesTxt=MONTH_FULL[relMes]+"/"+anoDoSemestre();
+    var L=["Boa tarde, Equipe!","",
+      "Seguem os indicadores semestrais referentes a "+mesTxt+" ("+labelDoSemestre(viewSemestre)+").","",
+      "Resultado do mês: "+ok+" de "+tot+" metas no alvo ("+pct+"%)"+(no?" · "+no+" fora da meta":"")+(wt?" · "+wt+" ainda sem apuração":"")+"."];
     var byEq={};gs.forEach(function(x){(byEq[x.g.equipe]=byEq[x.g.equipe]||[]).push(x);});
     Object.keys(byEq).sort().forEach(function(eq){
-      L.push("");L.push(eq.toUpperCase());
-      byEq[eq].forEach(function(x){var ic=x.e.st==="ok"?"🟢":x.e.st==="no"?"🔴":"⚪";L.push(ic+" "+x.g.indicador+" ("+person(x.g.respKey).nome+"): "+fmt(x.e.v,x.g.unidade)+" / meta "+x.g.meta);});
+      var arr=byEq[eq],eok=arr.filter(function(x){return x.e.st==="ok";}).length,etot=arr.filter(function(x){return x.e.st!=="wt";}).length;
+      L.push("");L.push(eq.toUpperCase()+" — "+eok+"/"+etot+" no alvo");
+      arr.forEach(function(x){var tag=x.e.st==="ok"?"[OK] ":x.e.st==="no"?"[ATENÇÃO] ":"[—] ";L.push("  "+tag+x.g.indicador+" ("+person(x.g.respKey).nome+"): "+fmt(x.e.v,x.g.unidade)+" / meta "+x.g.meta);});
     });
+    L.push("");L.push("A planilha completa com a evolução mês a mês está em anexo.");L.push("");L.push("Fico à disposição para esclarecer qualquer dúvida!");
     return L.join("\n");
+  }
+  function relatorioXLSX(){
+    if(!window.ExcelJS){alert("A planilha ainda está carregando. Tente de novo em 2 segundos.");return;}
+    var ms=mesesAteRel(),mesTxt=MONTH_FULL[relMes]+"/"+anoDoSemestre();
+    var gs=activeGoals().map(function(g){return {g:g,e:evalGoalAt(g,relMes)};});
+    gs.sort(function(a,b){return (a.g.equipe||"").localeCompare(b.g.equipe||"")||person(a.g.respKey).nome.localeCompare(person(b.g.respKey).nome);});
+    var ok=0,no=0,wt=0;gs.forEach(function(x){if(x.e.st==="ok")ok++;else if(x.e.st==="no")no++;else wt++;});
+    var tot=ok+no,pct=tot?Math.round(ok/tot*100):0;
+    var wb=new ExcelJS.Workbook();wb.creator="Metas Young";
+    var ws=wb.addWorksheet("Indicadores "+MONTH_LABELS[relMes],{views:[{state:"frozen",ySplit:4}]});
+    var head=["Equipe","Responsável","Indicador","Meta"].concat(ms.map(function(m){return MONTH_LABELS[m];})).concat(["Status"]);
+    var nCols=head.length;
+    ws.mergeCells(1,1,1,nCols);
+    var t=ws.getCell(1,1);t.value="Metas Young — Indicadores de "+mesTxt;t.font={name:"Arial",size:14,bold:true,color:{argb:"FF16130F"}};t.alignment={vertical:"middle"};ws.getRow(1).height=26;
+    ws.mergeCells(2,1,2,nCols);
+    var s=ws.getCell(2,1);s.value=ok+" de "+tot+" metas no alvo ("+pct+"%)"+(no?" · "+no+" fora da meta":"")+(wt?" · "+wt+" sem apuração":"")+" · "+labelDoSemestre(viewSemestre);s.font={name:"Arial",size:10,color:{argb:"FF6C665C"}};
+    ws.getRow(3).height=6;
+    var hr=ws.getRow(4);hr.values=head;hr.height=20;
+    hr.eachCell(function(c){c.font={name:"Arial",size:10,bold:true,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF16130F"}};c.alignment={vertical:"middle",horizontal:"center"};c.border={bottom:{style:"thin",color:{argb:"FFE7E3DA"}}};});
+    var FILL={ok:"FFDFF3E7",no:"FFF8E2DF",wt:"FFEDEDF0"},INK={ok:"FF1A7A46",no:"FFC7382F",wt:"FF6F7682"},LBL={ok:"No alvo",no:"Fora da meta",wt:"Aguardando"};
+    gs.forEach(function(x){
+      var g=x.g,e=x.e;
+      var vals=[g.equipe||"",person(g.respKey).nome,g.indicador,g.meta||""].concat(ms.map(function(m){var v=num(g.valores&&g.valores[m]);return v===null?"":(g.unidade==="%"?v/100:v);})).concat([LBL[e.st]]);
+      var row=ws.addRow(vals);
+      row.eachCell({includeEmpty:true},function(c,col){
+        c.font={name:"Arial",size:10,color:{argb:"FF16130F"}};c.alignment={vertical:"middle"};c.border={bottom:{style:"hair",color:{argb:"FFE7E3DA"}}};
+        if(col>4&&col<nCols){c.alignment={vertical:"middle",horizontal:"right"};if(g.unidade==="%"&&c.value!=="")c.numFmt="0.0%";
+          var mk=ms[col-5],mv=num(g.valores&&g.valores[mk]);
+          if(mv!==null){var hit=g.direcao==="menor"?mv<=g.target:mv>=g.target;c.fill={type:"pattern",pattern:"solid",fgColor:{argb:hit?FILL.ok:FILL.no}};c.font={name:"Arial",size:10,bold:true,color:{argb:hit?INK.ok:INK.no}};}}
+        if(col===nCols){c.fill={type:"pattern",pattern:"solid",fgColor:{argb:FILL[e.st]}};c.font={name:"Arial",size:10,bold:true,color:{argb:INK[e.st]}};c.alignment={vertical:"middle",horizontal:"center"};}
+      });
+    });
+    var widths=[20,22,34,10].concat(ms.map(function(){return 11;})).concat([14]);
+    widths.forEach(function(w,i){ws.getColumn(i+1).width=w;});
+    wb.xlsx.writeBuffer().then(function(buf){
+      var blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Indicadores Young - "+MONTH_FULL[relMes]+" "+anoDoSemestre()+".xlsx";document.body.appendChild(a);a.click();
+      setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},150);
+    }).catch(function(err){alert("Não foi possível gerar a planilha: "+err.message);});
   }
   function relatorioCSV(){
     var ms=monthsOf();
@@ -942,7 +990,7 @@
     try{var blob=new Blob(["﻿"+conteudo],{type:(tipo||"text/plain")+";charset=utf-8"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download=nome;document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},120);}catch(e){alert("Não foi possível baixar: "+e.message);}
   }
   function copiar(txt){
-    try{navigator.clipboard.writeText(txt).then(function(){alert("Resumo copiado! Cole no e-mail ou WhatsApp.");},function(){baixar("relatorio-metas.txt",txt,"text/plain");});}
+    try{navigator.clipboard.writeText(txt).then(function(){alert("E-mail copiado! É só colar e anexar a planilha.");},function(){baixar("relatorio-metas.txt",txt,"text/plain");});}
     catch(e){baixar("relatorio-metas.txt",txt,"text/plain");}
   }
   function relatorioImprimir(){
@@ -1061,6 +1109,7 @@
     if(act==="close"){closeModal();return;}
     if(act==="relcopy"){copiar(relatorioTexto());return;}
     if(act==="relcsv"){baixar("metas-"+viewSemestre+"-"+relMes+".csv",relatorioCSV(),"text/csv");return;}
+    if(act==="relxlsx"){relatorioXLSX();return;}
     if(act==="relprint"){relatorioImprimir();return;}
     if(act==="cfgback"){cfgModal();return;}
     if(act==="newgoal"){goMontar();return;}
