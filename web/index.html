@@ -318,8 +318,9 @@
     <div class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
     <h1>Aguardando aprovação</h1>
     <p>Seu acesso foi solicitado. Um administrador precisa liberar para você ver o painel.</p>
-    <button class="gbtn" id="btnPendSair">Sair</button>
+    <button class="gbtn" id="btnPendSair">Sair e entrar com outra conta</button>
     <div class="note">Assim que aprovarem, é só entrar de novo.</div>
+    <div class="note" id="pendInfo" style="margin-top:10px;font-family:monospace;font-size:11px"></div>
   </div>
 </div>
 
@@ -1203,9 +1204,20 @@
     sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:"select_account"}}});
   }
   function showLogin(){el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;el("montarPage").hidden=true;montarOpen=false;}
+  var _entrarTentativas=0;
   function afterLogin(){
     sb.rpc("entrar").then(function(r){
-      var d=(r&&r.data)||{};
+      if(!r||r.error||!r.data){
+        // erro de rede/token/servidor: NÃO é "aguardando aprovação" — tenta de novo e, se persistir, mostra o erro real
+        _entrarTentativas++;
+        if(_entrarTentativas<=3){setTimeout(afterLogin,700*_entrarTentativas);return;}
+        var msg=(r&&r.error&&r.error.message)||"sem resposta do servidor";
+        el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;
+        var ln=el("loginNote");if(ln)ln.textContent="Não consegui carregar seu acesso ("+msg+"). Clique em Entrar de novo.";
+        return;
+      }
+      _entrarTentativas=0;
+      var d=r.data||{};
       canEdit=!!d.admin; myRespKey=d.respKey||null;
       if(d.admin||d.status==="ativo"){
         el("loginScreen").hidden=true;el("pendingScreen").hidden=true;el("app").hidden=false;
@@ -1226,8 +1238,14 @@
       }else{
         try{sessionStorage.removeItem("metas_goto");}catch(e){}
         el("loginScreen").hidden=true;el("app").hidden=true;el("pendingScreen").hidden=false;
+        var pi=el("pendInfo");if(pi)pi.textContent="conta: "+((currentUser&&currentUser.email)||"?")+" · status: "+(d.status||"?")+" · admin: "+(!!d.admin);
       }
-    }).catch(function(){el("loginScreen").hidden=true;el("app").hidden=true;el("pendingScreen").hidden=false;});
+    }).catch(function(err){
+      _entrarTentativas++;
+      if(_entrarTentativas<=3){setTimeout(afterLogin,700*_entrarTentativas);return;}
+      el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;
+      var ln=el("loginNote");if(ln)ln.textContent="Não consegui carregar seu acesso ("+((err&&err.message)||"erro")+"). Clique em Entrar de novo.";
+    });
   }
   function boot(){
     sb.auth.getSession().then(function(res){
