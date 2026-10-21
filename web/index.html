@@ -275,6 +275,7 @@
       <div class="seg" role="tablist">
         <button id="vMetas" aria-pressed="true">Metas</button>
         <button id="vPessoas" aria-pressed="false">Pessoas</button>
+        <button id="vMontar" aria-pressed="false" hidden>Montar metas</button>
       </div>
       <select class="ctl" id="selSem" title="Semestre"></select>
       <select class="ctl" id="selNivel"><option value="">Todos os níveis</option><option>Operacional</option><option>Gerencial</option></select>
@@ -295,6 +296,10 @@
       <button class="btn" id="btnCfg" hidden>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.9 1.15V22a2 2 0 01-4 0v-.09A1.65 1.65 0 006 20.4l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 003.6 15H3.5a2 2 0 010-4H3.6a1.65 1.65 0 001.5-2.9l-.06-.06A2 2 0 118 5.07l.06.06A1.65 1.65 0 0011 4.6V4.5a2 2 0 014 0v.09a1.65 1.65 0 002.9 1.5l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0020.4 11h.1a2 2 0 010 4z"/></svg>
         Config
+      </button>
+      <button class="btn" id="btnNova" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nova meta
       </button>
       <button class="btn" id="btnRel">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
@@ -329,7 +334,7 @@
   var currentUser=null, canEdit=false, editMode=false, view="metas";
   var cfg=null, goalsMap={}, peopleMap={}, currentModal=null, myRespKey=null, viewSemestre=null;
   var filters={nivel:"",status:"",equipe:"",sort:"atraso",mine:false};
-  var relMes=null, lastLoadTs=0;
+  var relMes=null, lastLoadTs=0, montarSem=null, _formSem=null;
   var expanded={}, renderPending=false, photoTargetKey=null;
 
   var el=function(id){return document.getElementById(id)};
@@ -346,6 +351,7 @@
   function mesesDoSemestre(sem){if(/-1$/.test(sem||""))return ["jan","fev","mar","abr","mai","jun"];if(/-2$/.test(sem||""))return ["jul","ago","set","out","nov","dez"];return (cfg&&cfg.meses)||["jul","ago","set","out","nov","dez"];}
   function labelDoSemestre(sem){if(cfg&&sem===cfg.semestreAtivo)return cfg.semLabel||sem;var m=/(\d{4})-([12])/.exec(sem||"");return m?((m[2]==="1"?"1º":"2º")+" Semestre "+m[1]):sem;}
   function semestresDisponiveis(){var s={};for(var id in goalsMap){if(goalsMap[id].semestre)s[goalsMap[id].semestre]=1;}if(cfg)s[cfg.semestreAtivo]=1;return Object.keys(s).sort().reverse();}
+  function nextSem(s){var m=/(\d{4})-([12])/.exec(s||"");if(!m)return s;return m[2]==="1"?(m[1]+"-2"):((parseInt(m[1],10)+1)+"-1");}
   function monthsOf(){return mesesDoSemestre(viewSemestre);}
   function curMonthKey(){if(!cfg||viewSemestre!==cfg.semestreAtivo)return null;var map={1:"jan",2:"fev",3:"mar",4:"abr",5:"mai",6:"jun",7:"jul",8:"ago",9:"set",10:"out",11:"nov",12:"dez"};var k=map[new Date().getMonth()+1];return (monthsOf().indexOf(k)>=0)?k:null;}
   function myOwn(g){return !canEdit && !!myRespKey && g.respKey===myRespKey;}
@@ -445,13 +451,16 @@
     renderScore();renderChips();
     el("vMetas").setAttribute("aria-pressed",view==="metas");
     el("vPessoas").setAttribute("aria-pressed",view==="pessoas");
+    el("vMontar").hidden=!canEdit; el("vMontar").setAttribute("aria-pressed",view==="montar");
+    if(view==="montar"&&!canEdit)view="metas";
     el("btnCfg").hidden=!canEdit;
+    el("btnNova").hidden=!canEdit;
     var be=el("btnEdit");
     be.classList.toggle("accent",editMode);
     be.childNodes[be.childNodes.length-1].nodeValue=editMode?" Editando":" Modo edição";
     be.disabled=!canEdit;
     be.title=canEdit?"":"Só adm e coordenador administrativo podem editar";
-    if(view==="metas")renderGrid();else renderPeople();
+    if(view==="montar")renderMontar();else if(view==="metas")renderGrid();else renderPeople();
   }
   function renderScore(){
     var gs=activeGoals().map(evalGoal),ok=0,no=0,wt=0;
@@ -563,11 +572,37 @@
     h+='</div>';el("content").innerHTML=h;
   }
 
+  function renderMontar(){
+    if(!montarSem)montarSem=nextSem(cfg.semestreAtivo);
+    var list=[];for(var id in goalsMap){if(goalsMap[id].semestre===montarSem)list.push(goalsMap[id]);}
+    list.sort(function(a,b){return (a.equipe||"").localeCompare(b.equipe||"")||(a.indicador||"").localeCompare(b.indicador||"");});
+    var ativo = montarSem===cfg.semestreAtivo;
+    var h='<div class="hint">Monte aqui as metas de um semestre — inclusive o <b>próximo</b>, antes de começar. Elas ficam guardadas e só passam a valer pra todos quando você <b>ativar esse semestre na Config</b>. Semestre ativo hoje: <b>'+esc(cfg.semLabel||cfg.semestreAtivo)+'</b>.</div>';
+    h+='<div class="frow" style="align-items:flex-end;margin:14px 0 6px"><div class="field" style="max-width:220px"><label>Semestre que você está montando</label><input id="montar-sem" value="'+esc(montarSem)+'" placeholder="ex.: 2027-1"></div>';
+    h+='<button class="btn accent" data-act="novametasem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar meta</button>';
+    h+='<span class="userchip">'+esc(labelDoSemestre(montarSem))+(ativo?" · ativo agora":" · rascunho")+' · '+list.length+' meta'+(list.length===1?"":"s")+'</span></div>';
+    if(!list.length){
+      h+='<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><h3>Nenhuma meta em '+esc(labelDoSemestre(montarSem))+'</h3><p>Clique em "Adicionar meta" para começar a montar este semestre.</p></div>';
+    }else{
+      h+='<div class="plist">';
+      list.forEach(function(g){
+        var p=person(g.respKey);
+        h+='<div class="prow">'+avaHTML(g.respKey,p.nome);
+        h+='<div class="pi"><div class="pnn">'+esc(g.indicador)+(g.auto?' <span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)">⟳ auto</span>':'')+'</div>';
+        h+='<div class="pee">'+esc(p.nome||"—")+' · '+esc(g.equipe||"")+' · '+esc(g.nivel||"")+' · meta '+esc(g.meta||"")+'</div></div>';
+        h+='<button class="mini-btn" data-act="editgoal" data-id="'+g.id+'">Editar</button>';
+        h+='<button class="mini-btn del" data-act="delgoal" data-id="'+g.id+'">Excluir</button></div>';
+      });
+      h+='</div>';
+    }
+    el("content").innerHTML=h;
+  }
+
   // ---------- supabase data ----------
   function mapGoal(r){return {id:r.id,semestre:r.semestre,equipe:r.equipe,nivel:r.nivel,rito:r.rito,indicador:r.indicador,meta:r.meta,op:r.op,target:r.target,unidade:r.unidade,direcao:r.direcao,detalhamento:r.detalhamento,fonte:r.fonte,responsavel:r.responsavel,respKey:r.resp_key,inicial:r.inicial,valores:r.valores||{},ordem:r.ordem,auto:r.auto};}
   function mapPerson(r){return {id:r.id,nome:r.nome,equipe:r.equipe,cor:r.cor,fotoUrl:r.foto_url,email:r.email,status:r.status};}
   function goalToRow(p){
-    var m={indicador:"indicador",meta:"meta",op:"op",target:"target",unidade:"unidade",direcao:"direcao",nivel:"nivel",equipe:"equipe",rito:"rito",detalhamento:"detalhamento",fonte:"fonte",responsavel:"responsavel",respKey:"resp_key",inicial:"inicial",valores:"valores",semestre:"semestre",ordem:"ordem"};
+    var m={indicador:"indicador",meta:"meta",op:"op",target:"target",unidade:"unidade",direcao:"direcao",nivel:"nivel",equipe:"equipe",rito:"rito",detalhamento:"detalhamento",fonte:"fonte",responsavel:"responsavel",respKey:"resp_key",inicial:"inicial",valores:"valores",semestre:"semestre",ordem:"ordem",auto:"auto"};
     var o={};for(var k in p)if(m[k])o[m[k]]=p[k];o.atualizado_em=new Date().toISOString();return o;
   }
   function loadAll(){
@@ -588,10 +623,10 @@
   }
   function refreshModal(){ if(currentModal==="cfg")cfgModal(); }
 
-  function saveGoal(id,patch){
+  function saveGoal(id,patch,cb){
     var exists=!!goalsMap[id],row=goalToRow(patch);
     var q=exists?sb.from("goals").update(row).eq("id",id):sb.from("goals").insert(Object.assign({id:id},row));
-    q.then(function(r){if(r.error)alert("Não foi possível salvar: "+r.error.message);loadAll();});
+    q.then(function(r){if(r.error)alert("Não foi possível salvar: "+r.error.message);if(cb)cb(r);else loadAll();});
   }
   function saveMonth(id,mo,raw){
     var g=goalsMap[id];if(!g)return;
@@ -618,8 +653,9 @@
   function closeModal(){el("ov").classList.remove("open");el("modal").innerHTML="";currentModal=null;}
   function newId(){return "g"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
-  function goalForm(g){
+  function goalForm(g,sem){
     currentModal="goal";
+    _formSem = sem || (g&&g.semestre) || (cfg&&cfg.semestreAtivo);
     var isNew=!g;
     g=g||{indicador:"",meta:"",equipe:"",nivel:"Operacional",rito:"Semestral",direcao:"maior",unidade:"num",detalhamento:"",fonte:"",respKey:"",inicial:""};
     var eqs={};Object.keys(peopleMap).forEach(function(k){if(peopleMap[k].equipe)eqs[peopleMap[k].equipe]=1;});
@@ -634,7 +670,16 @@
     h+='<div class="frow"><div class="field"><label>Equipe</label><input id="f-eq" value="'+esc(g.equipe)+'" list="eqlist" placeholder="Ex.: Comercial"><datalist id="eqlist">'+Object.keys(eqs).sort().map(function(e){return '<option value="'+esc(e)+'">';}).join("")+'</datalist></div>';
     h+='<div class="field"><label>Rito de revisão</label><input id="f-rito" value="'+esc(g.rito)+'" placeholder="Ex.: Café Young"></div></div>';
     h+='<div class="field"><label>Detalhamento</label><textarea id="f-det">'+esc(g.detalhamento)+'</textarea></div>';
-    h+='<div class="field"><label>Fonte</label><input id="f-fonte" value="'+esc(g.fonte)+'"></div></div>';
+    h+='<div class="field"><label>Fonte</label><input id="f-fonte" value="'+esc(g.fonte)+'"></div>';
+    h+='<div class="field"><label>Valor inicial / base <span style="color:var(--faint)">(opcional — p/ VSO é o estoque inicial, ex.: 437)</span></label><input id="f-inicial" value="'+esc(g.inicial||"")+'" placeholder="ex.: 437"></div>';
+    h+='<div class="field"><label>Automação (fonte automática)</label><select id="f-auto">'
+      +'<option value="">Manual (preenchido à mão)</option>'
+      +'<option value="vendas_internas"'+(g.auto==="vendas_internas"?" selected":"")+'>Vendas do consultor — no mês (por pessoa)</option>'
+      +'<option value="qualidade_venda"'+(g.auto==="qualidade_venda"?" selected":"")+'>Qualidade de Venda — gatilho de entrada (por pessoa)</option>'
+      +'<option value="novos_parceiros"'+(g.auto==="novos_parceiros"?" selected":"")+'>Novos parceiros cadastrados — no mês (empresa)</option>'
+      +'<option value="vso"'+(g.auto==="vso"?" selected":"")+'>VSO — acumulado no semestre (empresa, Sienge)</option>'
+      +'</select></div>';
+    h+='<div class="hint">Com uma automação escolhida, a meta se preenche sozinha todo dia e deixa de ser editável na mão. As opções "por pessoa" usam o <b>responsável</b> acima — ele precisa ter o <b>e-mail de login</b> vinculado na Config.</div></div>';
     h+='<div class="m-foot"><button class="btn" data-act="close">Cancelar</button><button class="btn accent" data-act="savegoal" data-id="'+(g.id||"")+'">'+(isNew?"Criar meta":"Salvar")+'</button></div>';
     openModal(h);
   }
@@ -644,10 +689,12 @@
     var n=(m.replace("%","").match(/-?\d+[.,]?\d*/)||[])[0];
     var patch={indicador:el("f-ind").value.trim(),meta:el("f-meta").value.trim(),unidade:el("f-un").value,op:op,target:n?parseFloat(n.replace(",",".")):0,
       respKey:el("f-resp").value,responsavel:el("f-resp").value?peopleMap[el("f-resp").value].nome:"",nivel:el("f-niv").value,equipe:el("f-eq").value.trim(),rito:el("f-rito").value.trim(),
-      detalhamento:el("f-det").value.trim(),fonte:el("f-fonte").value.trim(),semestre:cfg.semestreAtivo};
+      detalhamento:el("f-det").value.trim(),fonte:el("f-fonte").value.trim(),
+      semestre:(_formSem||cfg.semestreAtivo),inicial:(el("f-inicial")?el("f-inicial").value.trim():""),auto:(el("f-auto")?(el("f-auto").value||null):null)};
     if(!patch.indicador){el("f-ind").focus();return;}
-    if(id&&goalsMap[id])saveGoal(id,patch);
-    else{patch.direcao=(op==="<"||op==="<=")?"menor":"maior";var nid=newId();patch.valores={};monthsOf().forEach(function(mm){patch.valores[mm]=null;});patch.inicial="";saveGoal(nid,patch);}
+    var finish=function(){ if(patch.auto){ sb.rpc("recalcular_autos_admin").then(function(){loadAll();}); } else { loadAll(); } };
+    if(id&&goalsMap[id])saveGoal(id,patch,finish);
+    else{patch.direcao=(op==="<"||op==="<=")?"menor":"maior";var nid=newId();patch.valores={};monthsOf().forEach(function(mm){patch.valores[mm]=null;});saveGoal(nid,patch,finish);}
     closeModal();
   }
   function evalGoalAt(g,mes){
@@ -805,8 +852,10 @@
   document.addEventListener("click",function(ev){
     if(ev.target.closest("#vMetas")){view="metas";render();return;}
     if(ev.target.closest("#vPessoas")){view="pessoas";render();return;}
+    if(ev.target.closest("#vMontar")){view="montar";render();return;}
     if(ev.target.closest("#btnEdit")){if(canEdit){editMode=!editMode;render();}return;}
     if(ev.target.closest("#btnCfg")){if(canEdit)cfgModal();return;}
+    if(ev.target.closest("#btnNova")){if(canEdit)goalForm(null);return;}
     if(ev.target.closest("#btnRel")){relatorioModal();return;}
     if(ev.target.closest("#btnSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnPendSair")){sb.auth.signOut({scope:"local"});return;}
@@ -824,6 +873,7 @@
     if(act==="relprint"){relatorioImprimir();return;}
     if(act==="cfgback"){cfgModal();return;}
     if(act==="newgoal"){goalForm(null);return;}
+    if(act==="novametasem"){goalForm(null,(el("montar-sem")?el("montar-sem").value.trim():montarSem)||montarSem);return;}
     if(act==="editgoal"){goalForm(goalsMap[id]);return;}
     if(act==="savegoal"){submitGoal(id);return;}
     if(act==="delgoal"){deleteGoal(id);return;}
@@ -846,7 +896,9 @@
     var mo=ev.target.closest("#content .mo input");
     if(mo){saveMonth(mo.getAttribute("data-id"),mo.getAttribute("data-mo"),mo.value);return;}
     var rm=ev.target.closest("#rel-mes");
-    if(rm){relMes=rm.value;var rb=el("relBody");if(rb)rb.innerHTML=relatorioBody();}
+    if(rm){relMes=rm.value;var rb=el("relBody");if(rb)rb.innerHTML=relatorioBody();return;}
+    var ms2=ev.target.closest("#montar-sem");
+    if(ms2){montarSem=ms2.value.trim();if(view==="montar")renderMontar();}
   });
   document.addEventListener("focusout",function(){setTimeout(function(){if(renderPending&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#content .mo")))render();},60);});
   el("selSem").addEventListener("change",function(e){viewSemestre=e.target.value;render();});
