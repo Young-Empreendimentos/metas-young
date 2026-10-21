@@ -8,3 +8,6 @@ Thumbs.db
 *.xlsx
 *.xls
 *.HEIC
+
+# rota gerada no deploy (copia do index)
+web/criarmetas/
