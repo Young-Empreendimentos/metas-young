@@ -11,3 +11,6 @@ Thumbs.db
 
 # rota gerada no deploy (copia do index)
 web/criarmetas/
+web/metas/
+web/tabela/
+web/pessoas/

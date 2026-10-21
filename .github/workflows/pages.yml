@@ -22,8 +22,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Rota /criarmetas (mesmo app)
-        run: mkdir -p web/criarmetas && cp web/index.html web/criarmetas/index.html
+      - name: Paginas por URL (mesmo app em cada rota)
+        run: |
+          for r in criarmetas metas tabela pessoas; do
+            mkdir -p "web/$r" && cp web/index.html "web/$r/index.html"
+          done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
