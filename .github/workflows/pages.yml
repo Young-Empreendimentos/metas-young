@@ -22,6 +22,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: So publica se este commit ainda for o topo da main
+        run: |
+          git fetch --quiet origin main
+          TIP=$(git rev-parse origin/main)
+          if [ "$TIP" != "$GITHUB_SHA" ]; then
+            echo "Commit $GITHUB_SHA nao e mais o topo da main ($TIP). Abortando para nao publicar versao antiga."
+            exit 1
+          fi
       - name: Paginas por URL (mesmo app em cada rota)
         run: |
           for r in criarmetas metas tabela pessoas; do
