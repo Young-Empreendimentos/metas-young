@@ -317,6 +317,20 @@
 <main class="wrap"><div id="content"></div></main>
 </div>
 
+<div id="montarPage" hidden>
+  <header>
+    <div class="wrap" style="display:flex;align-items:center;gap:14px;padding-block:18px">
+      <img src="logo.png" class="hdrlogo" alt="">
+      <div style="flex:1;min-width:0"><div class="lbl">Área do administrador</div><h1 style="font-size:clamp(22px,4vw,32px);line-height:1.05">Montar metas</h1></div>
+      <button class="btn" id="btnVoltarPainel">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Voltar ao painel
+      </button>
+    </div>
+  </header>
+  <main class="wrap" style="padding-block:20px 60px"><div id="montarContent"></div></main>
+</div>
+
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 <input type="file" accept="image/*" class="hidden-file" id="filePick">
 
@@ -451,8 +465,7 @@
     renderScore();renderChips();
     el("vMetas").setAttribute("aria-pressed",view==="metas");
     el("vPessoas").setAttribute("aria-pressed",view==="pessoas");
-    el("vMontar").hidden=!canEdit; el("vMontar").setAttribute("aria-pressed",view==="montar");
-    if(view==="montar"&&!canEdit)view="metas";
+    el("vMontar").hidden=!canEdit;
     el("btnCfg").hidden=!canEdit;
     el("btnNova").hidden=!canEdit;
     var be=el("btnEdit");
@@ -460,7 +473,7 @@
     be.childNodes[be.childNodes.length-1].nodeValue=editMode?" Editando":" Modo edição";
     be.disabled=!canEdit;
     be.title=canEdit?"":"Só adm e coordenador administrativo podem editar";
-    if(view==="montar")renderMontar();else if(view==="metas")renderGrid();else renderPeople();
+    if(view==="metas")renderGrid();else renderPeople();
   }
   function renderScore(){
     var gs=activeGoals().map(evalGoal),ok=0,no=0,wt=0;
@@ -595,8 +608,11 @@
       });
       h+='</div>';
     }
-    el("content").innerHTML=h;
+    var box=el("montarContent");if(box)box.innerHTML=h;
   }
+  var montarOpen=false;
+  function showMontar(){montarOpen=true;el("app").hidden=true;el("montarPage").hidden=false;try{window.scrollTo(0,0);}catch(e){}renderMontar();}
+  function closeMontar(){montarOpen=false;el("montarPage").hidden=true;el("app").hidden=false;render();}
 
   // ---------- supabase data ----------
   function mapGoal(r){return {id:r.id,semestre:r.semestre,equipe:r.equipe,nivel:r.nivel,rito:r.rito,indicador:r.indicador,meta:r.meta,op:r.op,target:r.target,unidade:r.unidade,direcao:r.direcao,detalhamento:r.detalhamento,fonte:r.fonte,responsavel:r.responsavel,respKey:r.resp_key,inicial:r.inicial,valores:r.valores||{},ordem:r.ordem,auto:r.auto};}
@@ -619,6 +635,7 @@
       lastLoadTs=Date.now();
       if(renderPending && document.activeElement && document.activeElement.closest && document.activeElement.closest("#content .mo"))return;
       render();
+      if(montarOpen)renderMontar();
     }).catch(function(e){console.warn("loadAll",e);});
   }
   function refreshModal(){ if(currentModal==="cfg")cfgModal(); }
@@ -852,7 +869,8 @@
   document.addEventListener("click",function(ev){
     if(ev.target.closest("#vMetas")){view="metas";render();return;}
     if(ev.target.closest("#vPessoas")){view="pessoas";render();return;}
-    if(ev.target.closest("#vMontar")){view="montar";render();return;}
+    if(ev.target.closest("#vMontar")){if(canEdit)showMontar();return;}
+    if(ev.target.closest("#btnVoltarPainel")){closeMontar();return;}
     if(ev.target.closest("#btnEdit")){if(canEdit){editMode=!editMode;render();}return;}
     if(ev.target.closest("#btnCfg")){if(canEdit)cfgModal();return;}
     if(ev.target.closest("#btnNova")){if(canEdit)goalForm(null);return;}
@@ -919,7 +937,7 @@
   function doLogin(){
     sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:"select_account"}}});
   }
-  function showLogin(){el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;}
+  function showLogin(){el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;el("montarPage").hidden=true;montarOpen=false;}
   function afterLogin(){
     sb.rpc("entrar").then(function(r){
       var d=(r&&r.data)||{};
