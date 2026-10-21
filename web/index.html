@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Metas Young</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Albert+Sans:wght@400;500;600;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
@@ -62,7 +63,10 @@
 
   header{background:var(--surface);border-bottom:1px solid var(--line)}
   .hero{padding-block:22px 20px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between}
-  .hero-l{min-width:0;flex:1 1 280px}
+  .hero-l{min-width:0;flex:1 1 280px;display:flex;align-items:center;gap:16px}
+  .hdrlogo{height:56px;width:auto;flex:none}
+  .hero-t{min-width:0}
+  .loginlogo{width:64px;height:auto;display:block;margin:0 auto 16px}
   .eyebrow{display:flex;align-items:center;gap:9px;margin-bottom:6px}
   .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
   .hero h1{font-size:clamp(28px,5vw,42px);line-height:1}
@@ -214,7 +218,7 @@
 
 <div class="login" id="loginScreen" hidden>
   <div class="box">
-    <div class="mark">M</div>
+    <img src="logo.png" class="loginlogo" alt="Metas Young">
     <h1>Metas Young</h1>
     <p>Entre com sua conta Young para ver o painel.</p>
     <button class="gbtn" id="btnGoogle">
@@ -240,9 +244,12 @@
   <div class="wrap">
     <div class="hero">
       <div class="hero-l">
-        <div class="eyebrow"><span class="dot"></span><span class="lbl" id="semLabel">Carregando…</span></div>
-        <h1>Metas Young</h1>
-        <div class="sub" id="heroSub">Preparando o placar das metas…</div>
+        <img src="logo.png" class="hdrlogo" alt="">
+        <div class="hero-t">
+          <div class="eyebrow"><span class="dot"></span><span class="lbl" id="semLabel">Carregando…</span></div>
+          <h1>Metas Young</h1>
+          <div class="sub" id="heroSub">Preparando o placar das metas…</div>
+        </div>
       </div>
       <div class="scoreboard" id="scoreboard" hidden>
         <div class="ring">
