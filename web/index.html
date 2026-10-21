@@ -484,7 +484,7 @@
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
     if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
-    if(a==="obra_paver")return "% de conclusão física da obra pela Dashboard de Serviços do Paver: só serviços com tag (mão de obra), cada item limitado ao previsto, soma do executado ÷ soma do previsto. A obra vem do campo 'Valor inicial/base' (nome da obra) ou do nome contido no indicador.";
+    if(a==="obra_paver")return "% de conclusão física da obra, igual a engenharia calcula no Paver: o % de cada serviço da Dashboard de Serviços (mão de obra, item limitado ao previsto) e a média simples dos serviços. A obra vem do nome contido no indicador (ou do campo Inicial).";
     if(a==="qualidade_venda")return "% das vendas internas do mês com entrada ≥ 10% do preço do lote (gatilho de entrada), pelo Pingolead/CRM.";
     return "Conta as vendas internas do consultor no mês (negócios vendidos no Pingolead; vendas com corretor externo não contam pra meta).";
   }
