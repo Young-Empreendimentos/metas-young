@@ -484,6 +484,7 @@
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
     if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
+    if(a==="registros_atrasados")return "Registros em andamento no Sistema de Registros (mesma regra da tela Em Andamento: fora segurar/CAIXA/Morada da Coxilha e concluídos) cujo gatilho foi atingido há mais de 6 meses.";
     if(a==="projetos_prazo")return "% de projetos do Esquadro entregues no prazo, julgando pelo mês do prazo: entrega válida até o prazo conta no prazo; entrega depois conta atrasada; sem entrega ainda não entra; sem prazo definido não entra.";
     if(a==="obra_paver")return "% de conclusão física da obra, igual a Dashboard de Serviços do Paver: o % de cada serviço (meio-fio, pavimentação, redes) e a média simples dos serviços. A obra vem do nome contido no indicador (ou do campo Inicial).";
     if(a==="qualidade_venda")return "% das vendas internas do mês com entrada ≥ 10% do preço do lote (gatilho de entrada), pelo Pingolead/CRM.";
@@ -903,6 +904,7 @@
       +'<option value="novos_parceiros"'+(g.auto==="novos_parceiros"?" selected":"")+'>Novos parceiros cadastrados — no mês (empresa)</option>'
       +'<option value="obra_paver"'+(g.auto==="obra_paver"?" selected":"")+'>Conclusão física da obra — Paver, Dashboard de Serviços (obra pelo nome)</option>'
       +'<option value="projetos_prazo"'+(g.auto==="projetos_prazo"?" selected":"")+'>Projetos entregues no prazo — Esquadro (empresa)</option>'
+      +'<option value="registros_atrasados"'+(g.auto==="registros_atrasados"?" selected":"")+'>Registros atrasados — Sistema de Registros, gatilho há +6 meses (empresa)</option>'
       +'<option value="vso"'+(g.auto==="vso"?" selected":"")+'>VSO — acumulado no semestre (empresa, Sienge)</option>'
       +'</select></div>';
     h+='<div class="hint">Com uma automação escolhida, a meta se preenche sozinha todo dia e deixa de ser editável na mão. As opções "por pessoa" usam o <b>responsável</b> acima — ele precisa ter o <b>e-mail de login</b> vinculado na Config.</div></div>';
