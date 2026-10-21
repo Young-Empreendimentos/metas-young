@@ -609,7 +609,7 @@
     var box=el("montarContent");if(box)box.innerHTML=h;
   }
   var montarOpen=false;
-  function showMontar(){montarOpen=true;el("app").hidden=true;el("montarPage").hidden=false;try{window.scrollTo(0,0);}catch(e){}renderMontar();}
+  function showMontar(){if(!canEdit){goPainel();return;}montarOpen=true;el("app").hidden=true;el("montarPage").hidden=false;try{window.scrollTo(0,0);}catch(e){}renderMontar();}
   function closeMontar(){montarOpen=false;el("montarPage").hidden=true;el("app").hidden=false;render();}
   function isMontarRoute(){return /\/criarmetas\/?$/i.test(location.pathname);}
   function goMontar(){location.assign("/criarmetas");}
@@ -935,6 +935,7 @@
 
   // ---------- auth ----------
   function doLogin(){
+    try{if(isMontarRoute())sessionStorage.setItem("metas_goto","montar");}catch(e){}
     sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:"select_account"}}});
   }
   function showLogin(){el("loginScreen").hidden=false;el("pendingScreen").hidden=true;el("app").hidden=true;el("montarPage").hidden=true;montarOpen=false;}
@@ -946,8 +947,14 @@
         el("loginScreen").hidden=true;el("pendingScreen").hidden=true;el("app").hidden=false;
         var uc=el("userChip");uc.hidden=false;uc.textContent=(currentUser.email||"").split("@")[0];
         loadAll();
-        if(canEdit&&isMontarRoute())showMontar();
+        var querMontar=false; try{querMontar=sessionStorage.getItem("metas_goto")==="montar";}catch(e){}
+        if(canEdit&&(isMontarRoute()||querMontar)){
+          try{sessionStorage.removeItem("metas_goto");}catch(e){}
+          try{if(!isMontarRoute())history.replaceState(null,"","/criarmetas");}catch(e){}
+          showMontar();
+        }
       }else{
+        try{sessionStorage.removeItem("metas_goto");}catch(e){}
         el("loginScreen").hidden=true;el("app").hidden=true;el("pendingScreen").hidden=false;
       }
     }).catch(function(){el("loginScreen").hidden=true;el("app").hidden=true;el("pendingScreen").hidden=false;});
