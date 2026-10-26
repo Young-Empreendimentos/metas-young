@@ -757,16 +757,20 @@
 
   function geralChart(serie){
     var W=560,H=150,pl=10,pr=10,pt=14,pb=24,base=H-pb;
-    var coords=[];serie.forEach(function(s,i){if(s.pct!==null)coords.push([pl+(W-pl-pr)*(serie.length>1?i/(serie.length-1):0.5),pt+(base-pt)*(1-s.pct/100),i,s.pct]);});
+    var cm=curMonthKey();
+    var coords=[];serie.forEach(function(s,i){if(s.pct!==null)coords.push([pl+(W-pl-pr)*(serie.length>1?i/(serie.length-1):0.5),pt+(base-pt)*(1-s.pct/100),i,s.pct,s.m===cm]);});
     if(!coords.length)return '<div class="dmin">Sem dados ainda neste semestre.</div>';
     function X(i){return pl+(W-pl-pr)*(serie.length>1?i/(serie.length-1):0.5);}
-    var line=coords.map(function(c,i){return (i?"L":"M")+c[0].toFixed(1)+" "+c[1].toFixed(1);}).join(" ");
-    var area="M"+coords[0][0].toFixed(1)+" "+base+" "+coords.map(function(c){return "L"+c[0].toFixed(1)+" "+c[1].toFixed(1);}).join(" ")+" L"+coords[coords.length-1][0].toFixed(1)+" "+base+" Z";
+    var lastPartial=coords[coords.length-1][4];
+    var solid=lastPartial?coords.slice(0,coords.length-1):coords;
+    var areaC=solid.length?solid:coords;
+    var area="M"+areaC[0][0].toFixed(1)+" "+base+" "+areaC.map(function(c){return "L"+c[0].toFixed(1)+" "+c[1].toFixed(1);}).join(" ")+" L"+areaC[areaC.length-1][0].toFixed(1)+" "+base+" Z";
     var svg='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block;max-width:100%">';
     [0,50,100].forEach(function(gv){var y=pt+(base-pt)*(1-gv/100);svg+='<line x1="'+pl+'" y1="'+y.toFixed(1)+'" x2="'+(W-pr)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)" stroke-width="1"/><text x="'+pl+'" y="'+(y-3).toFixed(1)+'" font-size="9" fill="var(--faint)">'+gv+'%</text>';});
     svg+='<path d="'+area+'" fill="var(--accent-soft)" opacity=".7"/>';
-    svg+='<path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
-    coords.forEach(function(c){svg+='<circle cx="'+c[0].toFixed(1)+'" cy="'+c[1].toFixed(1)+'" r="3.2" fill="var(--accent)"/><text x="'+c[0].toFixed(1)+'" y="'+(c[1]-8).toFixed(1)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--fg)">'+c[3]+'%</text>';});
+    if(solid.length>1){var line=solid.map(function(c,i){return (i?"L":"M")+c[0].toFixed(1)+" "+c[1].toFixed(1);}).join(" ");svg+='<path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';}
+    if(lastPartial&&solid.length){var a=solid[solid.length-1],b=coords[coords.length-1];svg+='<path d="M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' L'+b[0].toFixed(1)+' '+b[1].toFixed(1)+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="4 3" stroke-linecap="round" opacity=".85"/>';}
+    coords.forEach(function(c){var pz=c[4];svg+='<circle cx="'+c[0].toFixed(1)+'" cy="'+c[1].toFixed(1)+'" r="3.2" fill="'+(pz?'var(--surface)':'var(--accent)')+'" stroke="var(--accent)" stroke-width="'+(pz?'1.8':'0')+'"/><text x="'+c[0].toFixed(1)+'" y="'+(c[1]-8).toFixed(1)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--fg)">'+c[3]+'%</text>'+(pz?'<text x="'+c[0].toFixed(1)+'" y="'+(c[1]+13).toFixed(1)+'" text-anchor="middle" font-size="8" font-weight="600" fill="var(--faint)">parcial</text>':'');});
     serie.forEach(function(s,i){svg+='<text x="'+X(i).toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle" font-size="10" fill="var(--faint)">'+MONTH_LABELS[s.m]+'</text>';});
     svg+='</svg>';
     return svg;
