@@ -483,6 +483,7 @@
   function myOwn(g){return !canEdit && !!myRespKey && g.respKey===myRespKey;}
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
+    if(a==="novos_negocios_vgv")return "VGV dos negócios fechados no semestre (Perdigueiro, glebas com negócio fechado) dividido pela meta de VGV do semestre (R$ 75M, lida do próprio Perdigueiro). Acumulado no semestre.";
     if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
     if(a==="cobranca_sem_atraso")return "% de processos de cobrança sem atraso (igual o KPI do ADIMPLA, completo): lote registrado = intimação em até 35 dias do atraso; não registrado = notificação 1 em até 35 e notificação 2 em até 45. Fora sub judice e já pagos. Foto atual, atualiza todo dia.";
     if(a==="inadimplencia_adimpla")return "Clientes no kanban do ADIMPLA em aberto (fora sub judice), incluindo a aba Paralela, com mais de 270 dias de atraso. Conta clientes distintos.";
@@ -906,6 +907,7 @@
       +'<option value="">Manual (preenchido à mão)</option>'
       +'<option value="vendas_internas"'+(g.auto==="vendas_internas"?" selected":"")+'>Vendas do consultor — no mês (por pessoa)</option>'
       +'<option value="qualidade_venda"'+(g.auto==="qualidade_venda"?" selected":"")+'>Qualidade de Venda — gatilho de entrada (por pessoa)</option>'
+      +'<option value="novos_negocios_vgv"'+(g.auto==="novos_negocios_vgv"?" selected":"")+'>Novos negócios (VGV) — Perdigueiro / meta do semestre</option>'
       +'<option value="novos_parceiros"'+(g.auto==="novos_parceiros"?" selected":"")+'>Novos parceiros cadastrados — no mês (empresa)</option>'
       +'<option value="obra_paver"'+(g.auto==="obra_paver"?" selected":"")+'>Conclusão física da obra — Paver, Dashboard de Serviços (obra pelo nome)</option>'
       +'<option value="projetos_prazo"'+(g.auto==="projetos_prazo"?" selected":"")+'>Projetos entregues no prazo — Esquadro (empresa)</option>'
