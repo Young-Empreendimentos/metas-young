@@ -639,7 +639,7 @@
     h+='<span class="tag '+(g.nivel==="Gerencial"?"ger":"")+'">'+esc(g.nivel)+'</span>';
     h+='<span class="tag">'+esc(g.equipe)+'</span>';
     h+=(myOwn(g)?'<span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)">Sua meta</span>':'');
-    h+=(g.auto?'<span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)" title="Preenchida automaticamente do CRM">⟳ auto</span>':'');
+    h+=(g.auto?'<span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)" title="Automatizado">⟳ auto</span>':'');
     h+='</div></div>';
     h+='<span class="status '+e.st+'">'+stTxt+'</span></div>';
     h+='<div class="c-mid"><div class="c-ind">'+esc(g.indicador)+'</div>';
@@ -741,7 +741,7 @@
         var sc=e.st==="ok"?"var(--good)":e.st==="no"?"var(--bad)":"var(--wait)";
         var stTxt={ok:"No alvo",no:"Fora",wt:"Aguard."}[e.st];
         h+='<tr><td class="stripe" style="--sc:'+sc+'"><div class="tp">'+avaHTML(g.respKey,p.nome,"sm")+'<span class="tp-n">'+esc(p.nome)+'</span></div></td>';
-        h+='<td>'+esc(g.indicador)+(g.auto?' <span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)">⟳</span>':'')+'</td>';
+        h+='<td>'+esc(g.indicador)+(g.auto?' <span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)" title="Automatizado">⟳</span>':'')+'</td>';
         h+='<td><span class="status '+e.st+'">'+stTxt+'</span></td>';
         ms.forEach(function(m){
           var v=num(g.valores&&g.valores[m]),cls="";
@@ -813,7 +813,7 @@
       list.forEach(function(g){
         var p=person(g.respKey);
         h+='<div class="prow">'+avaHTML(g.respKey,p.nome);
-        h+='<div class="pi"><div class="pnn">'+esc(g.indicador)+(g.auto?' <span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)">⟳ auto</span>':'')+'</div>';
+        h+='<div class="pi"><div class="pnn">'+esc(g.indicador)+(g.auto?' <span class="tag" style="background:var(--accent-soft);color:var(--accent-deep)" title="Automatizado">⟳ auto</span>':'')+'</div>';
         h+='<div class="pee">'+esc(p.nome||"—")+' · '+esc(g.equipe||"")+' · '+esc(g.nivel||"")+' · meta '+esc(g.meta||"")+'</div></div>';
         h+='<button class="mini-btn" data-act="editgoal" data-id="'+g.id+'">Editar</button>';
         h+='<button class="mini-btn del" data-act="delgoal" data-id="'+g.id+'">Excluir</button></div>';
