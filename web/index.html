@@ -484,7 +484,7 @@
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
     if(a==="novos_negocios_vgv")return "VGV dos negócios fechados no semestre (Perdigueiro, glebas com negócio fechado) dividido pela meta de VGV do semestre (R$ 75M, lida do próprio Perdigueiro). Acumulado no semestre.";
-    if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
+    if(a==="novos_parceiros")return "Conta os parceiros novos ATIVOS cadastrados no Pingolead dentro do mês, pela data de cadastro (corretores inativos não contam).";
     if(a==="cobranca_sem_atraso")return "% de processos de cobrança sem atraso (igual o KPI do ADIMPLA, completo): lote registrado = intimação em até 35 dias do atraso; não registrado = notificação 1 em até 35 e notificação 2 em até 45. Fora sub judice e já pagos. Foto atual, atualiza todo dia.";
     if(a==="inadimplencia_adimpla")return "Clientes no kanban do ADIMPLA em aberto (fora sub judice), incluindo a aba Paralela, com mais de 270 dias de atraso. Conta clientes distintos.";
     if(a==="mkt_leads")return "Leads acumulados no semestre, direto da view de indicadores do Marketing (marketing.ind_semestral), mesma régua do app do Marketing.";
