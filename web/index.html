@@ -484,6 +484,7 @@
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
     if(a==="novos_negocios_vgv")return "VGV dos negócios fechados no semestre (Perdigueiro, glebas com negócio fechado) dividido pela meta de VGV do semestre (R$ 75M, lida do próprio Perdigueiro). Acumulado no semestre.";
+    if(a==="vagas_preenchidas_prazo")return "Vagas do Talents abertas no semestre (acumulado, por data de criação, menos as Canceladas) e, dentro delas, quantas foram Preenchidas no prazo — a data de início do candidato (filled_start_date) é menor ou igual ao prazo da vaga (deadline). Precisa que a vaga tenha prazo definido e o preenchimento registre a data de início; sem isso não conta como no prazo. Meses passados ficam no manual.";
     if(a==="novos_parceiros")return "Conta os parceiros novos ATIVOS cadastrados no Pingolead dentro do mês, pela data de cadastro (corretores inativos não contam).";
     if(a==="cobranca_sem_atraso")return "% de processos de cobrança sem atraso (igual o KPI do ADIMPLA, completo): lote registrado = intimação em até 35 dias do atraso; não registrado = notificação 1 em até 35 e notificação 2 em até 45. Fora sub judice e já pagos. Foto atual, atualiza todo dia.";
     if(a==="inadimplencia_adimpla")return "Clientes no kanban do ADIMPLA em aberto (fora sub judice), incluindo a aba Paralela, com mais de 270 dias de atraso. Conta clientes distintos.";
@@ -908,6 +909,7 @@
       +'<option value="vendas_internas"'+(g.auto==="vendas_internas"?" selected":"")+'>Vendas do consultor — no mês (por pessoa)</option>'
       +'<option value="qualidade_venda"'+(g.auto==="qualidade_venda"?" selected":"")+'>Qualidade de Venda — gatilho de entrada (por pessoa)</option>'
       +'<option value="novos_negocios_vgv"'+(g.auto==="novos_negocios_vgv"?" selected":"")+'>Novos negócios (VGV) — Perdigueiro / meta do semestre</option>'
+      +'<option value="vagas_preenchidas_prazo"'+(g.auto==="vagas_preenchidas_prazo"?" selected":"")+'>Vagas preenchidas no prazo — Talents (data de início ≤ prazo, acumulado)</option>'
       +'<option value="novos_parceiros"'+(g.auto==="novos_parceiros"?" selected":"")+'>Novos parceiros cadastrados — no mês (empresa)</option>'
       +'<option value="obra_paver"'+(g.auto==="obra_paver"?" selected":"")+'>Conclusão física da obra — Paver, Dashboard de Serviços (obra pelo nome)</option>'
       +'<option value="projetos_prazo"'+(g.auto==="projetos_prazo"?" selected":"")+'>Projetos entregues no prazo — Esquadro (empresa)</option>'
