@@ -506,7 +506,7 @@
     var c=currentVal(g);
     if(c.v===null)return {st:"wt",cur:c,gap:-1};
     var t=g.target, ok, gap;
-    if(g.direcao==="menor"){ ok=c.v<=t; gap=c.v<=t?0:(c.v-t)/(Math.abs(t)+1); }
+    if(g.direcao==="menor"){ ok=c.v<=t; gap=c.v<=t?0:(Math.abs(t)>0?(c.v-t)/Math.abs(t):(c.v-t)); }
     else{ ok=c.v>=t; gap=(t>0)?Math.max(0,(t-c.v)/t):(c.v>=t?0:1); }
     return {st:ok?"ok":"no",cur:c,gap:gap};
   }
