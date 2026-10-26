@@ -484,6 +484,7 @@
   function autoDesc(a){
     if(a==="vso")return "VSO = unidades de contratos emitidos (não cancelados) no Sienge, acumuladas desde o início do semestre (01/07), dividido pelo estoque inicial. Vai somando o semestre todo — não é só o mês.";
     if(a==="novos_parceiros")return "Conta os parceiros novos cadastrados no Pingolead dentro do mês, pela data de cadastro.";
+    if(a==="inadimplencia_adimpla")return "Clientes no kanban do ADIMPLA em aberto (fora sub judice), incluindo a aba Paralela, com mais de 270 dias de atraso. Conta clientes distintos.";
     if(a==="mkt_leads")return "Leads acumulados no semestre, direto da view de indicadores do Marketing (marketing.ind_semestral), mesma régua do app do Marketing.";
     if(a==="mkt_roas")return "ROAS acumulado no semestre, direto da view de indicadores do Marketing (marketing.ind_semestral).";
     if(a==="mkt_eficiencia")return "Eficiência de budget acumulada no semestre (investimento ÷ budget ÷ giro de estoque), direto da view marketing.ind_semestral.";
@@ -908,6 +909,7 @@
       +'<option value="obra_paver"'+(g.auto==="obra_paver"?" selected":"")+'>Conclusão física da obra — Paver, Dashboard de Serviços (obra pelo nome)</option>'
       +'<option value="projetos_prazo"'+(g.auto==="projetos_prazo"?" selected":"")+'>Projetos entregues no prazo — Esquadro (empresa)</option>'
       +'<option value="registros_atrasados"'+(g.auto==="registros_atrasados"?" selected":"")+'>Registros atrasados — Sistema de Registros, gatilho há +6 meses (empresa)</option>'
+      +'<option value="inadimplencia_adimpla"'+(g.auto==="inadimplencia_adimpla"?" selected":"")+'>Inadimplência +270d — ADIMPLA (kanban aberto, fora sub judice)</option>'
       +'<option value="mkt_leads"'+(g.auto==="mkt_leads"?" selected":"")+'>Leads acumulados — Marketing (ind_semestral)</option>'
       +'<option value="mkt_roas"'+(g.auto==="mkt_roas"?" selected":"")+'>ROAS acumulado — Marketing (ind_semestral)</option>'
       +'<option value="mkt_eficiencia"'+(g.auto==="mkt_eficiencia"?" selected":"")+'>Eficiência de budget — Marketing (ind_semestral)</option>'
