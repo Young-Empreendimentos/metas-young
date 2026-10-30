@@ -601,11 +601,11 @@
     if(view==="geral")renderGeral();else if(view==="tabela")renderTabela();else if(view==="pessoas")renderPeople();else renderGrid();
   }
   function renderScore(){
-    var gs=activeGoals().map(evalGoal),ok=0,no=0,wt=0;
+    var gs=activeGoals().filter(function(g){return !filters.nivel||g.nivel===filters.nivel;}).map(evalGoal),ok=0,no=0,wt=0;
     gs.forEach(function(e){if(e.st==="ok")ok++;else if(e.st==="no")no++;else wt++;});
     var tot=ok+no,pct=tot?Math.round(ok/tot*100):0;
     el("scoreboard").hidden=false;
-    el("heroSub").textContent=gs.length+" metas acompanhadas · "+ok+" no alvo neste semestre";
+    el("heroSub").textContent=gs.length+" metas acompanhadas · "+ok+" no alvo neste semestre"+(filters.nivel?" · nível "+filters.nivel:"");
     el("tOk").textContent=ok;el("tNo").textContent=no;el("tWt").textContent=wt;
     el("ringPct").textContent=pct+"%";
     var arc=el("ringArc"),C=2*Math.PI*50;
@@ -776,8 +776,9 @@
     return svg;
   }
   function renderGeral(){
-    var gs=activeGoals();
-    if(!gs.length){el("content").innerHTML=emptyState();return;}
+    var all=activeGoals();
+    if(!all.length){el("content").innerHTML=emptyState();return;}
+    var gs=all.filter(function(g){return !filters.nivel||g.nivel===filters.nivel;});
     var evals=gs.map(function(g){return {g:g,e:evalGoal(g)};});
     var ok=0,no=0,wt=0;evals.forEach(function(x){if(x.e.st==="ok")ok++;else if(x.e.st==="no")no++;else wt++;});
     var tot=ok+no,pct=tot?Math.round(ok/tot*100):0;
@@ -788,7 +789,9 @@
     var risk=evals.filter(function(x){return x.e.st==="no";}).sort(function(a,b){return b.e.gap-a.e.gap;}).slice(0,6);
     var ringCol=pct>=60?"var(--good)":pct>=35?"var(--gold)":"var(--bad)";
     var h='<div class="dash">';
-    h+='<div class="dcard" style="grid-column:1/-1"><h3>Evolução no semestre (% das metas batidas no mês)</h3>'+geralChart(serie)+'</div>';
+    var niveis=[['','Todos'],['Gerencial','Gerencial'],['Operacional','Operacional']];
+    var segNivel='<div class="seg" style="flex:none">'+niveis.map(function(nv){return '<button data-nivel="'+nv[0]+'" aria-pressed="'+(filters.nivel===nv[0]?'true':'false')+'">'+nv[1]+'</button>';}).join('')+'</div>';
+    h+='<div class="dcard" style="grid-column:1/-1"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px"><h3 style="margin:0">Evolução no semestre (% das metas batidas no mês)</h3>'+segNivel+'</div>'+geralChart(serie)+'</div>';
     h+='<div class="dcard d-span6"><h3>Ranking</h3><div class="drank">';
     if(!rank.length)h+='<div class="dmin">Sem dados ainda.</div>';
     rank.forEach(function(o,i){var p=person(o.key);h+='<div class="rrow"><span class="rn">'+(i+1)+'</span>'+avaHTML(o.key,p.nome,"sm")+'<span class="ri">'+esc(p.nome)+'</span><span class="rb"><i style="width:'+Math.round(o.pct*100)+'%"></i></span><span class="rp">'+Math.round(o.pct*100)+'%</span></div>';});
@@ -1159,10 +1162,12 @@
     if(ev.target.closest("#btnPendSair")){sb.auth.signOut({scope:"local"});return;}
     if(ev.target.closest("#btnGoogle")){doLogin();return;}
     if(ev.target===el("ov")){closeModal();return;}
-    var t=ev.target.closest("[data-act],[data-eq],[data-mine]");if(!t)return;
+    var t=ev.target.closest("[data-act],[data-eq],[data-mine],[data-nivel]");if(!t)return;
     if(t.getAttribute("data-mine")){filters.mine=!filters.mine;render();return;}
     var eq=t.getAttribute("data-eq");
     if(eq!==null){filters.equipe=eq;render();return;}
+    var nivSel=t.getAttribute("data-nivel");
+    if(nivSel!==null){filters.nivel=nivSel;render();return;}
     var act=t.getAttribute("data-act"),id=t.getAttribute("data-id"),k=t.getAttribute("data-k");
     if(act==="detail"){expanded[id]=!expanded[id];render();return;}
     if(act==="close"){closeModal();return;}
