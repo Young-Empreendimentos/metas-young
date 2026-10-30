@@ -492,7 +492,7 @@
     if(a==="mkt_roas")return "ROAS acumulado no semestre, direto da view de indicadores do Marketing (marketing.ind_semestral).";
     if(a==="mkt_eficiencia")return "Eficiência de budget acumulada no semestre (investimento ÷ budget ÷ giro de estoque), direto da view marketing.ind_semestral.";
     if(a==="registros_atrasados")return "Registros em andamento no Sistema de Registros (mesma regra da tela Em Andamento: fora segurar/CAIXA/Morada da Coxilha e concluídos) cujo gatilho foi atingido há mais de 6 meses.";
-    if(a==="projetos_prazo")return "% de projetos do Esquadro entregues no prazo, julgando pelo mês do prazo: entrega válida até o prazo conta no prazo; entrega depois conta atrasada; sem entrega ainda não entra; sem prazo definido não entra.";
+    if(a==="projetos_prazo")return "Igual à Dashboard do Esquadro (indicador semestral, ACUMULADO): projetos concluídos no prazo ÷ total de projetos concluídos com prazo no semestre. Entram demandas com prazo que estão em Concluído ou Em análise interno/externo, cuja conclusão caiu no semestre; no prazo = data de conclusão ≤ prazo. Vai somando o semestre — o mês corrente mostra o acumulado e os meses passados ficam congelados.";
     if(a==="obra_paver")return "% de conclusão física da obra, igual a Dashboard de Serviços do Paver: o % de cada serviço (meio-fio, pavimentação, redes) e a média simples dos serviços. A obra vem do nome contido no indicador (ou do campo Inicial).";
     if(a==="qualidade_venda")return "% das vendas internas do mês com entrada ≥ 10% do preço do lote (gatilho de entrada), pelo Pingolead/CRM.";
     return "Conta as vendas internas do consultor no mês (negócios vendidos no Pingolead; vendas com corretor externo não contam pra meta).";
@@ -916,7 +916,7 @@
       +'<option value="vagas_preenchidas_prazo"'+(g.auto==="vagas_preenchidas_prazo"?" selected":"")+'>Vagas preenchidas no prazo — Talents (data de início ≤ prazo, acumulado)</option>'
       +'<option value="novos_parceiros"'+(g.auto==="novos_parceiros"?" selected":"")+'>Novos parceiros cadastrados — no mês (empresa)</option>'
       +'<option value="obra_paver"'+(g.auto==="obra_paver"?" selected":"")+'>Conclusão física da obra — Paver, Dashboard de Serviços (obra pelo nome)</option>'
-      +'<option value="projetos_prazo"'+(g.auto==="projetos_prazo"?" selected":"")+'>Projetos entregues no prazo — Esquadro (empresa)</option>'
+      +'<option value="projetos_prazo"'+(g.auto==="projetos_prazo"?" selected":"")+'>Projetos no prazo — Esquadro / Dashboard (acumulado no semestre)</option>'
       +'<option value="registros_atrasados"'+(g.auto==="registros_atrasados"?" selected":"")+'>Registros atrasados — Sistema de Registros, gatilho há +6 meses (empresa)</option>'
       +'<option value="cobranca_sem_atraso"'+(g.auto==="cobranca_sem_atraso"?" selected":"")+'>Processos de cobrança sem atraso — ADIMPLA (reg. + não reg., 35/45d)</option>'
       +'<option value="inadimplencia_adimpla"'+(g.auto==="inadimplencia_adimpla"?" selected":"")+'>Inadimplência +270d — ADIMPLA (kanban aberto, fora sub judice)</option>'
